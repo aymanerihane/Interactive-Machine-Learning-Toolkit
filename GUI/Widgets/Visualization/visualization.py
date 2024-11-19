@@ -32,7 +32,7 @@ class VisualizationPage(ctk.CTkFrame):
         # Poll the active tab to bind the mouse wheel dynamically
         self.active_tab = "Pre-Training"  # Default tab
         self.bind_mousewheel(self.pre_training_canvas)  # Initial binding
-        self.poll_active_tab()
+        # self.poll_active_tab()
 
 
     def create_scrollable_tab(self, parent):
@@ -56,18 +56,18 @@ class VisualizationPage(ctk.CTkFrame):
 
         return canvas, scrollable_frame
 
-    def poll_active_tab(self):
-        """Continuously check for the active tab and update mouse wheel binding."""
-        current_tab = self.tab_view.get()  # Get the name of the active tab
-        if current_tab != self.active_tab:
-            self.active_tab = current_tab
-            if current_tab == "Pre-Training":
-                self.bind_mousewheel(self.pre_training_canvas)
-            elif current_tab == "Post-Training":
-                self.bind_mousewheel(self.post_training_canvas)
+    # def poll_active_tab(self):
+    #     """Continuously check for the active tab and update mouse wheel binding."""
+    #     current_tab = self.tab_view.get()  # Get the name of the active tab
+    #     if current_tab != self.active_tab:
+    #         self.active_tab = current_tab
+    #         if current_tab == "Pre-Training":
+    #             self.bind_mousewheel(self.pre_training_canvas)
+    #         elif current_tab == "Post-Training":
+    #             self.bind_mousewheel(self.post_training_canvas)
 
-        # Repeat this function every 200ms (improved performance)
-        self.after(200, self.poll_active_tab)
+    #     # Repeat this function every 200ms (improved performance)
+    #     self.after(200, self.poll_active_tab)
 
     def bind_mousewheel(self, widget):
         """Bind mouse wheel scrolling to the given widget."""
@@ -95,7 +95,6 @@ class VisualizationPage(ctk.CTkFrame):
         row = 0
         # Iterate through the dictionary based on the parent (pre-training or post-training)
         for section, charts in chart_dict.items():
-            print(f"Section: {section} in {dict_parent}")
             # Add section title
             section_label = ctk.CTkLabel(tab, text=section, font=("Arial", 18, "bold"), anchor="w")
             section_label.grid(row=row, column=0, columnspan=3, sticky="w", pady=10, padx=10)
@@ -179,7 +178,6 @@ class VisualizationPage(ctk.CTkFrame):
         """Load charts data from the JSON file."""
         try:
             file_path = os.path.join(self.current_dir, "../Data/chartsType.json")
-            print(file_path)
             with open(file_path, 'r') as json_file:
                 print("Charts data loaded successfully!")
                 return json.load(json_file)

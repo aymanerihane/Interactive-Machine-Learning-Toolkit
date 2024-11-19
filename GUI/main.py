@@ -2,7 +2,8 @@ import customtkinter as ctk
 from home import HomePage
 from Widgets.Visualization.visualization import VisualizationPage
 from Widgets.header_wgt import HeaderWidget
-from Widgets.histograme import Histograme
+from Widgets.Visualization.charts.histograme import Histograme
+from Widgets.Visualization.charts.scatterPlot import ScatterPlot
 import json
 
 class MainApp(ctk.CTk):
@@ -18,20 +19,32 @@ class MainApp(ctk.CTk):
         self.pages = {}  # Store page instances
         self.initialize_pages()
 
+        # Bind the close event to the destroy method
+        self.protocol("WM_DELETE_WINDOW", self.destroy)
+
     def initialize_pages(self):
         """Initialize all pages and store them in a dictionary."""
         self.pages["home"] = HomePage(self, switch_page=self.show_page)
         self.pages["visualization"] = VisualizationPage(self, switch_page=self.show_page)
         self.pages["Histograms"] = Histograme(self,switch_page=self.show_page)
+        self.pages["Scatter Plots"] = ScatterPlot(self,switch_page=self.show_page)
 
-        # charts = self.load_data(self)
-        # for category, data in charts.items():
-        #     for data_type, chart_data in data.items():
-        #         self.pages[chart_data] = chart_data["class"](self, switch_page=self.show_page)
-        
+
 
         # Show the home page by default
         self.show_page("home")
+
+    def destroy(self):
+        """Override the destroy method to handle any cleanup before closing."""
+        print("Destroying the application...")
+        
+        # Cancel any ongoing events (like 'after' events)
+        for widget in self.winfo_children():
+            widget.after_cancel(widget.winfo_id())  # Cancel any active 'after' events on widgets
+        
+        # Perform other cleanup tasks if needed (e.g., stop any background threads, etc.)
+
+        super().destroy()  # Call the parent class's destroy method to ensure the app closes properly
         
 
     def show_page(self, page_name):
