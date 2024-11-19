@@ -2,8 +2,13 @@ import customtkinter as ctk
 from home import HomePage
 from Widgets.Visualization.visualization import VisualizationPage
 from Widgets.header_wgt import HeaderWidget
-from Widgets.Visualization.charts.histograme import Histograme
-from Widgets.Visualization.charts.scatterPlot import ScatterPlot
+from Widgets.Visualization.charts.PreTraining.histograme import Histograme
+from Widgets.Visualization.charts.PreTraining.scatterPlot import ScatterPlot
+from Widgets.Visualization.charts.PreTraining.piechart import PieChart
+from Widgets.Visualization.charts.PreTraining.boxPlot import BoxPlot
+from Widgets.Visualization.charts.PreTraining.heatmap import Heatmap
+# from Widgets.Visualization.charts.PreTraining.pairPlot import PairPlot
+
 import json
 
 class MainApp(ctk.CTk):
@@ -26,8 +31,9 @@ class MainApp(ctk.CTk):
         """Initialize all pages and store them in a dictionary."""
         self.pages["home"] = HomePage(self, switch_page=self.show_page)
         self.pages["visualization"] = VisualizationPage(self, switch_page=self.show_page)
-        self.pages["Histograms"] = Histograme(self,switch_page=self.show_page)
-        self.pages["Scatter Plots"] = ScatterPlot(self,switch_page=self.show_page)
+
+        for charts in [Histograme, ScatterPlot, PieChart, BoxPlot, Heatmap]:
+            self.pages[charts.__name__.lower()] = charts(self, switch_page=self.show_page)
 
 
 
@@ -51,16 +57,15 @@ class MainApp(ctk.CTk):
         """Switch to a specific page."""
         for page in self.pages.values():
             page.pack_forget()  # Hide all pages
-        self.pages[page_name].pack(expand=True, fill="both")  # Show the selected page
+        self.pages[page_name.lower()].pack(expand=True, fill="both")  # Show the selected page
 
         # Update the header text dynamically using the page name
         self.header.update_text(page_name.capitalize())  # Capitalize to make it look cleaner
 
-
-    def load_data(self):
-        with open("data.json", "r") as file:
-            data = json.load(file)
-        return data
+    def load_json(self, file_path):
+        """Load JSON data from a file."""
+        with open(file_path, "r") as file:
+            return json.load(file)
 
 
 

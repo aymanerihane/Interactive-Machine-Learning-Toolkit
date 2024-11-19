@@ -5,23 +5,23 @@
                 "description": "Shows the distribution of a single feature.",
                 "models": ["Any dataset"]
             },
-            "Histograms": {
+            "Histograme": {
                 "description": "Shows the frequency distribution of numerical data.",
                 "models": ["Linear Regression", "Classification models"]
             },
-            "Scatter Plots": {
+            "ScatterPlot": {
                 "description": "Visualizes the relationship between two numerical variables.",
                 "models": ["Regression models", "Clustering models"]
             },
-            "Box Plots": {
+            "BoxPlot": {
                 "description": "Shows the distribution of numerical data using medians and quartiles.",
                 "models": ["Linear Regression", "Classification models"]
             },
-            "Heatmaps": {
+            "Heatmap": {
                 "description": "Represents data in a matrix format with colors indicating values.",
                 "models": ["Clustering models", "Correlation analysis"]
             },
-            "Pie Charts": {
+            "PieChart": {
                 "description": "Visualizes proportions of a whole as slices of a pie.",
                 "models": ["Classification models", "Cluster analysis"]
             }
