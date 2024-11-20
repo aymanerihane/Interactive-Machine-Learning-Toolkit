@@ -6,8 +6,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", 
 from GUI.Widgets.Visualization.charts.baseChart import BaseChart
 
 class Histograme(BaseChart):  # Inherit from CTkFrame for a reusable widget
-    def __init__(self, parent, switch_page):
-        super().__init__(parent, switch_page, chart_type="Histograme", has_y_axis=False,no_x_y=False)
+    def __init__(self, parent, switch_page,sharedState):
+        super().__init__(parent, switch_page,sharedState, chart_type="Histograme", has_y_axis=False,no_x_y=False,just_num=True)
 
 
 

@@ -6,11 +6,13 @@ from Widgets.HomePage.data_info import DataInfo
 from Widgets.HomePage.functionality import FunctionalitySection
 
 class HomePage(ctk.CTkFrame):
-    def __init__(self, parent,switch_page):
+    def __init__(self, parent,switch_page,sharedState):
         super().__init__(parent)
+        self.sharedState = sharedState
 
         self.statTestDataUpload = "disabled" 
         self.theme = "white"
+        
 
         # Set CustomTkinter Theme
         ctk.set_appearance_mode(self.theme)  # Modes: "light", "dark"
@@ -29,14 +31,14 @@ class HomePage(ctk.CTkFrame):
         ####################################
         #       Info Section
         ####################################
-        self.data_info = DataInfo(self)
+        self.data_info = DataInfo(self,self.sharedState)
         self.data_info.pack(pady=0, padx=0, fill="x")
         
         ####################################
         #       Functionality Section
         ####################################
 
-        self.functionality = FunctionalitySection(self)
+        self.functionality = FunctionalitySection(self,self.sharedState)
         self.functionality.pack(pady=0, padx=0, fill="x")
 
 

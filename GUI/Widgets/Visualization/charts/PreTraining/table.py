@@ -6,11 +6,12 @@ from tkinter import ttk
 
 
 class Table(ctk.CTkFrame):
-    def __init__(self, parent, switch_page):
+    def __init__(self, parent, switch_page,sharedState):
         super().__init__(parent)  # Correct usage of super        
         self.switch_page = switch_page
         self.selected_x_column = None
         self.selected_y_column = None
+        self.sharedState = sharedState
 
         # File structure
         current_dir = os.path.dirname(os.path.abspath(__file__))

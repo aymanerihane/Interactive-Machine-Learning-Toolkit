@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 class Heatmap(BaseChart):
-    def __init__(self, parent, switch_page):
-        super().__init__(parent, switch_page, chart_type="Heatmap", has_y_axis=False, no_x_y=True)
+    def __init__(self, parent, switch_page,sharedState):
+        super().__init__(parent, switch_page,sharedState, chart_type="Heatmap", has_y_axis=False, no_x_y=True)
         self.plot_chart()
 
     def plot_chart(self):

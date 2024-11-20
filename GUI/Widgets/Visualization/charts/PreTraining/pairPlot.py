@@ -2,8 +2,8 @@ from GUI.Widgets.Visualization.charts.baseChart import BaseChart
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 class PairPlots(BaseChart):
-    def __init__(self, parent, switch_page):
-        super().__init__(parent, switch_page, chart_type="Pair Plot", has_y_axis=False,no_x_y=True)
+    def __init__(self, parent, switch_page,sharedState):
+        super().__init__(parent, switch_page,sharedState, chart_type="Pair Plot", has_y_axis=False,no_x_y=True)
 
     def plot_chart(self):
         visualizer = super().plot_chart()

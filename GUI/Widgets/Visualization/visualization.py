@@ -6,9 +6,10 @@ import json
 from functools import partial
 
 class VisualizationPage(ctk.CTkFrame):
-    def __init__(self, parent, switch_page):
+    def __init__(self, parent, switch_page,sharedState):
         super().__init__(parent)
         self.switch_page = switch_page  # Function to switch pages
+        self.sharedState = sharedState
 
         self.training_done = False  # Flag to check if training is done
 
@@ -33,7 +34,7 @@ class VisualizationPage(ctk.CTkFrame):
         # Poll the active tab to bind the mouse wheel dynamically
         self.active_tab = "Pre-Training"  # Default tab
         self.bind_mousewheel(self.pre_training_canvas)  # Initial binding
-        # self.poll_active_tab()
+        self.poll_active_tab()
 
 
     def create_scrollable_tab(self, parent):
@@ -57,18 +58,18 @@ class VisualizationPage(ctk.CTkFrame):
 
         return canvas, scrollable_frame
 
-    # def poll_active_tab(self):
-    #     """Continuously check for the active tab and update mouse wheel binding."""
-    #     current_tab = self.tab_view.get()  # Get the name of the active tab
-    #     if current_tab != self.active_tab:
-    #         self.active_tab = current_tab
-    #         if current_tab == "Pre-Training":
-    #             self.bind_mousewheel(self.pre_training_canvas)
-    #         elif current_tab == "Post-Training":
-    #             self.bind_mousewheel(self.post_training_canvas)
+    def poll_active_tab(self):
+        """Continuously check for the active tab and update mouse wheel binding."""
+        current_tab = self.tab_view.get()  # Get the name of the active tab
+        if current_tab != self.active_tab:
+            self.active_tab = current_tab
+            if current_tab == "Pre-Training":
+                self.bind_mousewheel(self.pre_training_canvas)
+            elif current_tab == "Post-Training":
+                self.bind_mousewheel(self.post_training_canvas)
 
-    #     # Repeat this function every 200ms (improved performance)
-    #     self.after(200, self.poll_active_tab)
+        # Repeat this function every 200ms (improved performance)
+        self.after(200, self.poll_active_tab)
 
     def bind_mousewheel(self, widget):
         """Bind mouse wheel scrolling to the given widget."""
@@ -93,12 +94,18 @@ class VisualizationPage(ctk.CTkFrame):
         for i in range(3):  # Assuming 3 columns
             tab.grid_columnconfigure(i, weight=1)  # Distribute space equally
 
-        row = 0
+        # make a return button
+        self.return_button = ctk.CTkButton(
+            tab, text="Return to Home", width=20, command=lambda: self.switch_page("home")
+        )
+        self.return_button.grid(row=0, column=0, padx=20, pady=10, sticky="w")
+
+        row = 1
         # Iterate through the dictionary based on the parent (pre-training or post-training)
         for section, charts in chart_dict.items():
             # Add section title
             section_label = ctk.CTkLabel(tab, text=section, font=("Arial", 18, "bold"), anchor="w")
-            section_label.grid(row=row, column=0, columnspan=3, sticky="w", pady=10, padx=10)
+            section_label.grid(row=row, column=0, columnspan=3, sticky="ew", pady=10, padx=10)
             row += 1
 
             col = 0
@@ -136,7 +143,7 @@ class VisualizationPage(ctk.CTkFrame):
                 if not dict_parent == "post-training":
                     if not self.training_done:
                         self.post_training_tab.grid_forget()  # Hide the tab
-                        not_available_label = ctk.CTkLabel(frame, text="Available", font=("Arial", 10, "italic"), fg_color="green",corner_radius=15)
+                        not_available_label = ctk.CTkLabel(frame, text="Available" if self.sharedState.get_training_finish() else "Not Available", font=("Arial", 10, "italic"), fg_color="green",corner_radius=15)
                         not_available_label.pack(pady=5)
                     else:
                         self.post_training_tab.grid(row=row, column=0, columnspan=3, sticky="nsew")  # Show the tab again

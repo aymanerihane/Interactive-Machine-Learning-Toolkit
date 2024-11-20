@@ -5,12 +5,13 @@ from GUI.Widgets.Visualization.charts.baseChart import BaseChart
 
 
 class PieChart(BaseChart):
-    def __init__(self, parent, switch_page):
-        super().__init__(parent, switch_page, chart_type="Pie Chart", has_y_axis=False)
+    def __init__(self, parent, switch_page,sharedState):
+        super().__init__(parent, switch_page,sharedState, chart_type="Pie Chart", has_y_axis=False,just_cat=True)
         self.plot_chart()
 
     def plot_chart(self):
         visualizer = super().plot_chart()
+
         fig = visualizer.plot_pie(self.selected_x_column)
         self.canvas = FigureCanvasTkAgg(fig, self.plot_frame)
         canvas_widget = self.canvas.get_tk_widget()

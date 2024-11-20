@@ -11,6 +11,7 @@ class DataPreProcessor:
     def __init__(self, file_path):
         try:
             self.df = pd.read_csv(file_path)
+            self.original_data = self.df.copy()  # Save a copy of the original data
         except FileNotFoundError:
             raise FileNotFoundError(f"CSV file not found at: {file_path}")
         
@@ -22,7 +23,21 @@ class DataPreProcessor:
         self.onehot_encoder = OneHotEncoder(handle_unknown='ignore', sparse_output=False)  # For one-hot encoding
         self.tfidf_vectorizer = TfidfVectorizer()  # For text data
 
-
+    def return_original_data(self):
+        return self.original_data
+    
+    def identify_trget_column(self):
+        """
+        Identify the target column in the dataset.
+        """
+        # Check if there is a column named 'target' or 'Target'
+        if 'target' in self.df.columns:
+            return 'target'
+        elif 'Target' in self.df.columns:
+            return 'Target'
+        else:
+            return None
+    
     def clean_data(self):
         """
         Clean missing values in numerical and categorical columns.
@@ -46,33 +61,28 @@ class DataPreProcessor:
             self.df[num_cols] = self.scaler.fit_transform(self.df[num_cols])
         return self.df
 
-    # def encode_categorical(self):
-    #     """
-    #     Apply one-hot encoding to categorical columns.
-    #     """
-    #     cat_cols = self.df.select_dtypes(include=['object']).columns
-    #     for col in cat_cols:
-    #         onehot = self.onehot_encoder.fit_transform(self.df[[col]])
-    #         onehot_df = pd.DataFrame(onehot, columns=self.onehot_encoder.get_feature_names_out([col]))
-    #         self.df = pd.concat([self.df, onehot_df], axis=1)
-    #         self.df.drop(columns=[col], inplace=True)
-    #     return self.df
+
+
+
     def encode_categorical(self):
         """
-        Custom encoding for categorical variables, where each unique value is mapped to a numeric value.
-        This method works with columns that contain categories, like 'strong' and 'weak' being mapped to 0 and 1.
+        Encode categorical columns and save the mapping of original values to encoded values.
         """
         cat_cols = self.df.select_dtypes(include=['object']).columns
         for col in cat_cols:
-            # Create a mapping of unique values to numerical values
+            # Create a mapping of unique values to numeric values
             unique_values = self.df[col].unique()
             value_mapping = {value: idx for idx, value in enumerate(unique_values)}
+            reverse_mapping = {idx: value for value, idx in value_mapping.items()}
             
-            # Map the column to numeric values based on the mapping
+            # Save the mapping for later use
+            self.categorical_mappings[col] = reverse_mapping
+            
+            # Replace column values with encoded values
             self.df[col] = self.df[col].map(value_mapping)
         
         return self.df
-
+    
     def get_unique_categorical_values(self):
         """
         Get the unique values from categorical columns in their original form.
@@ -150,3 +160,5 @@ class DataPreProcessor:
         
         print(self.df.head())  # Print the processed DataFrame
         return self.df, self.unique_categorical_values
+
+    
