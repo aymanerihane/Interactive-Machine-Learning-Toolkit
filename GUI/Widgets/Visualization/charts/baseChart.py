@@ -54,6 +54,9 @@ class BaseChart(ctk.CTkFrame):
                 self.plot_frame.grid(row=3, column=0, padx=20, pady=20, sticky="new")
             else:
                 self.plot_frame.grid(row=2, column=0, padx=20, pady=20, sticky="new")
+        else:
+            self.plot_frame = ctk.CTkFrame(self, corner_radius=10)
+            self.plot_frame.grid(row=1, column=0, padx=20, pady=20, sticky="new")
 
         self.load_data()
         if not self.no_x_y:
@@ -65,7 +68,10 @@ class BaseChart(ctk.CTkFrame):
     def load_data(self):
         """Load and preprocess data"""
         try:
-            self.data = PreD(self.csv_file).preprocess()
+
+            self.data,self.unique_categorical_values = PreD(self.csv_file).preprocess()
+            print(self.unique_categorical_values)
+            
         except FileNotFoundError:
             raise FileNotFoundError(f"CSV file not found at: {self.csv_file}")
 
@@ -75,7 +81,7 @@ class BaseChart(ctk.CTkFrame):
             label = ctk.CTkLabel(self.column_button_frame_1, text="Select X Axis", font=("Arial", 12, "bold"))
             label.pack(side="left", padx=10)
 
-            for column in self.data.columns:
+            for column in self.data:
                 button = ctk.CTkButton(
                     self.column_button_frame_1,
                     text=column,
@@ -115,6 +121,8 @@ class BaseChart(ctk.CTkFrame):
             # Clear any previous chart
             for widget in self.plot_frame.winfo_children():
                 widget.destroy()
+
+        
 
         visualizer = ChartHandler(self.data)
         return visualizer

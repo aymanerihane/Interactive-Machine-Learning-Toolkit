@@ -3,6 +3,7 @@ from tkinter import Scrollbar
 import os
 from PIL import Image
 import json
+from functools import partial
 
 class VisualizationPage(ctk.CTkFrame):
     def __init__(self, parent, switch_page):
@@ -208,3 +209,5 @@ class VisualizationPage(ctk.CTkFrame):
 
         # Return the icon path or default icon if not found
         return os.path.join(image_path, chart_icons.get(chart_name, "defaultIcon.png"))
+    
+    

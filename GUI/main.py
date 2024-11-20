@@ -7,7 +7,8 @@ from Widgets.Visualization.charts.PreTraining.scatterPlot import ScatterPlot
 from Widgets.Visualization.charts.PreTraining.piechart import PieChart
 from Widgets.Visualization.charts.PreTraining.boxPlot import BoxPlot
 from Widgets.Visualization.charts.PreTraining.heatmap import Heatmap
-# from Widgets.Visualization.charts.PreTraining.pairPlot import PairPlot
+from Widgets.Visualization.charts.PreTraining.table import Table
+from Widgets.Visualization.charts.PreTraining.pairPlot import PairPlots
 
 import json
 
@@ -32,7 +33,7 @@ class MainApp(ctk.CTk):
         self.pages["home"] = HomePage(self, switch_page=self.show_page)
         self.pages["visualization"] = VisualizationPage(self, switch_page=self.show_page)
 
-        for charts in [Histograme, ScatterPlot, PieChart, BoxPlot, Heatmap]:
+        for charts in [Histograme, ScatterPlot, PieChart, BoxPlot, Heatmap,Table,PairPlots]:
             self.pages[charts.__name__.lower()] = charts(self, switch_page=self.show_page)
 
 
@@ -57,8 +58,8 @@ class MainApp(ctk.CTk):
         """Switch to a specific page."""
         for page in self.pages.values():
             page.pack_forget()  # Hide all pages
+        page_name = page_name.replace(" ", "")
         self.pages[page_name.lower()].pack(expand=True, fill="both")  # Show the selected page
-
         # Update the header text dynamically using the page name
         self.header.update_text(page_name.capitalize())  # Capitalize to make it look cleaner
 

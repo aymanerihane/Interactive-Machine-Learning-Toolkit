@@ -46,17 +46,50 @@ class DataPreProcessor:
             self.df[num_cols] = self.scaler.fit_transform(self.df[num_cols])
         return self.df
 
+    # def encode_categorical(self):
+    #     """
+    #     Apply one-hot encoding to categorical columns.
+    #     """
+    #     cat_cols = self.df.select_dtypes(include=['object']).columns
+    #     for col in cat_cols:
+    #         onehot = self.onehot_encoder.fit_transform(self.df[[col]])
+    #         onehot_df = pd.DataFrame(onehot, columns=self.onehot_encoder.get_feature_names_out([col]))
+    #         self.df = pd.concat([self.df, onehot_df], axis=1)
+    #         self.df.drop(columns=[col], inplace=True)
+    #     return self.df
     def encode_categorical(self):
         """
-        Apply one-hot encoding to categorical columns.
+        Custom encoding for categorical variables, where each unique value is mapped to a numeric value.
+        This method works with columns that contain categories, like 'strong' and 'weak' being mapped to 0 and 1.
         """
         cat_cols = self.df.select_dtypes(include=['object']).columns
         for col in cat_cols:
-            onehot = self.onehot_encoder.fit_transform(self.df[[col]])
-            onehot_df = pd.DataFrame(onehot, columns=self.onehot_encoder.get_feature_names_out([col]))
-            self.df = pd.concat([self.df, onehot_df], axis=1)
-            self.df.drop(columns=[col], inplace=True)
+            # Create a mapping of unique values to numerical values
+            unique_values = self.df[col].unique()
+            value_mapping = {value: idx for idx, value in enumerate(unique_values)}
+            
+            # Map the column to numeric values based on the mapping
+            self.df[col] = self.df[col].map(value_mapping)
+        
         return self.df
+
+    def get_unique_categorical_values(self):
+        """
+        Get the unique values from categorical columns in their original form.
+        This method helps retrieve the categorical values before encoding, so they can be used in plotting.
+        """
+        # Select categorical columns
+        cat_cols = self.df.select_dtypes(include=['object']).columns
+        
+        # Create a dictionary to hold the unique values of each categorical column
+        unique_values_dict = {}
+        
+        for col in cat_cols:
+            # Retrieve unique values for each categorical column
+            unique_values_dict[col] = self.df[col].unique().tolist()
+        
+        return unique_values_dict
+
 
     def label_encode(self):
         """
@@ -96,20 +129,24 @@ class DataPreProcessor:
             self.df = self.df.drop(text_column, axis=1).join(tfidf_df)
         return self.df
 
-    def preprocess(self):
+    def preprocess(self,just_clean=False):
         """
         Apply all preprocessing steps.
         """
         # Clean missing data
         self.df = self.clean_data()
-        # Scale numerical data
-        self.df = self.scale_data()
-        # Encode categorical variables
-        self.df = self.encode_categorical()
-        # Label encode if needed
-        self.df = self.label_encode()
-        # Handle date columns
-        self.df = self.handle_dates()
+        if just_clean:
+            return self.df
+        else:
+            self.unique_categorical_values = self.get_unique_categorical_values()
+            # Scale numerical data
+            self.df = self.scale_data()
+            # Encode categorical variables
+            # self.df = self.encode_categorical()
+            # Label encode if needed
+            self.df = self.label_encode()
+            # Handle date columns
+            self.df = self.handle_dates()
         
         print(self.df.head())  # Print the processed DataFrame
-        return self.df
+        return self.df, self.unique_categorical_values

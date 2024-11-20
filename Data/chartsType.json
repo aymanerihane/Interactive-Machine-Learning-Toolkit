@@ -9,19 +9,19 @@
                 "description": "Shows the frequency distribution of numerical data.",
                 "models": ["Linear Regression", "Classification models"]
             },
-            "ScatterPlot": {
+            "Scatter Plot": {
                 "description": "Visualizes the relationship between two numerical variables.",
                 "models": ["Regression models", "Clustering models"]
             },
-            "BoxPlot": {
+            "Box Plot": {
                 "description": "Shows the distribution of numerical data using medians and quartiles.",
                 "models": ["Linear Regression", "Classification models"]
             },
-            "Heatmap": {
+            "Heat Map": {
                 "description": "Represents data in a matrix format with colors indicating values.",
                 "models": ["Clustering models", "Correlation analysis"]
             },
-            "PieChart": {
+            "Pie Chart": {
                 "description": "Visualizes proportions of a whole as slices of a pie.",
                 "models": ["Classification models", "Cluster analysis"]
             }
