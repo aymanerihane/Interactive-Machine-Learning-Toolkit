@@ -26,17 +26,6 @@ class DataPreProcessor:
     def return_original_data(self):
         return self.original_data
     
-    def identify_trget_column(self):
-        """
-        Identify the target column in the dataset.
-        """
-        # Check if there is a column named 'target' or 'Target'
-        if 'target' in self.df.columns:
-            return 'target'
-        elif 'Target' in self.df.columns:
-            return 'Target'
-        else:
-            return None
     
     def clean_data(self):
         """
