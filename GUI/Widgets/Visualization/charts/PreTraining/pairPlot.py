@@ -7,7 +7,8 @@ class PairPlots(BaseChart):
 
     def plot_chart(self):
         visualizer = super().plot_chart()
-        fig = visualizer.plot_pair()
+        taregt_column = self.sharedState.get_target_column()
+        fig = visualizer.plot_pair(taregt_column)
 
         canvas = FigureCanvasTkAgg(fig, self.plot_frame)
         canvas.get_tk_widget().pack(fill="both", expand=True)

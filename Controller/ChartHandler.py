@@ -139,11 +139,16 @@ class ChartHandler:
         plt.title(f"Violin Plot of {column}")
         return plt.gcf()
 
-    def plot_pair(self):
+    def plot_pair(self,target_column):
         # Pair plot (scatter matrix) of the dataframe
         plt.figure(figsize=(10, 10))
-        sns.pairplot(self.df)
-        plt.title("Pair Plot")
+        if len(self.df.columns) > 5:
+            # take just the 5 first columns and make the hue the target column
+            sns.pairplot(self.df[self.df.columns[:5]],hue=target_column)
+            plt.title("Pair Plot for First 5 Columns")
+        else:
+            sns.pairplot(self.df)
+            plt.title("Pair Plot")
         return plt.gcf()
 
     def plot_stacked_bar(self):

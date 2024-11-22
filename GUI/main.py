@@ -42,7 +42,14 @@ class MainApp(ctk.CTk):
 
         super().destroy()  # Call the parent class's destroy method to ensure the app closes properly
 
-    def initialize_page(self, page_name):
+    def initialize_page(self, page_name,reinitialize=False):
+        if reinitialize or page_name not in self.pages:
+            if page_name in self.pages:
+                # Remove the old page instance if reinitializing
+                self.pages[page_name].destroy()
+                del self.pages[page_name]
+
+
         """Initialize and store the page in the dictionary if not already initialized."""
         if page_name == "home":
             self.pages[page_name] = HomePage(self, switch_page=self.show_page,sharedState=self.sharedState)
@@ -67,6 +74,14 @@ class MainApp(ctk.CTk):
     def show_page(self, page_name):
         """Switch to a specific page, initializing it if necessary."""
         page_name = page_name.replace(" ", "").lower()  # Normalize page name
+
+         # Reinitialize dynamic pages to reflect updated data
+        dynamic_pages = [
+            "histograme", "scatterplot", "piechart", "boxplot", 
+            "heatmap", "table", "pairplots", "violinplots", "stackedbarcharts"
+        ]
+        if page_name in dynamic_pages:
+            self.initialize_page(page_name, reinitialize=True)
         
         # Initialize the page if it hasn't been initialized yet
         if page_name not in self.pages:
