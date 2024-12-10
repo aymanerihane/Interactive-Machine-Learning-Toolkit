@@ -4,7 +4,6 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler, LabelEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.feature_extraction.text import TfidfVectorizer
-from datetime import datetime
 
 class DataPreProcessor:
     
@@ -22,6 +21,24 @@ class DataPreProcessor:
         self.scaler = StandardScaler()  # For scaling numerical data
         self.onehot_encoder = OneHotEncoder(handle_unknown='ignore', sparse_output=False)  # For one-hot encoding
         self.tfidf_vectorizer = TfidfVectorizer()  # For text data
+
+    def reduce_features(self, threshold=0.9):
+        """
+        Reduce the number of features using correlation.
+        """
+        # Calculate the correlation matrix
+        corr_matrix = self.df.corr().abs()
+        
+        # Select upper triangle of correlation matrix
+        upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(np.bool))
+        
+        # Find index of feature columns with correlation greater than threshold
+        to_drop = [column for column in upper.columns if any(upper[column] > threshold)]
+        
+        # Drop features
+        self.df.drop(columns=to_drop, inplace=True)
+        
+        return self.df
 
     def return_original_data(self):
         return self.original_data

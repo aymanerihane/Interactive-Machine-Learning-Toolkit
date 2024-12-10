@@ -4,11 +4,12 @@ class SharedState():
         super().__init__()
         self.file_uploaded = False
         self.test_file_uploaded = False
-        self.has_target = True # Default value for the checkbox
-        self.target_culumn = None  # Default value for the checkbox
-        self.has_split= False # Default value for the checkbox
+        self.has_target = True 
+        self.target_culumn = None  
+        self.has_split= False 
         self.training_finish = False
         self.testing_finish = False
+        self.prediction_finish = False
         
 
         # Define color palette and fonts
@@ -46,6 +47,9 @@ class SharedState():
     def set_testing_finish(self, value):
         self.testing_finish = value
 
+    def set_prediction_finish(self, value):
+        self.prediction_finish = value
+
     # Getters
 
     def get_test_file_uploaded(self):
@@ -69,3 +73,6 @@ class SharedState():
     
     def get_testing_finish(self):
         return self.testing_finish
+    
+    def get_prediction_finish(self):
+        return self.prediction_finish

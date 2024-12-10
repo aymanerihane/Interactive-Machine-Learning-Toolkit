@@ -2,33 +2,114 @@
 from Controller.dataPreProcecing import DataPreProcessor
 from Controller.sharedState import SharedState
 from sklearn.model_selection import train_test_split
+from Controller.dataPreProcecing import DataPreProcessor as PreD
+import os
+
 
 class TrainingProcess():
     def __init__(self,file_path,sharedState):
         self.file_path = file_path
         self.sharedState = sharedState
-        self.dataPreProcessor = DataPreProcessor(file_path)
+
+        # initialize data preprocessor
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        root_dir = os.path.join(current_dir, "..")
+        self.csv_file = os.path.join(root_dir, "Data/csv_file.csv")
+        self.dataPreProcessor = DataPreProcessor(self.csv_file)
+
+
         self.model = None
+        self.model_name = None
         self.X_train = None
         self.X_test = None
         self.y_train = None
         self.y_test = None
         self.y_pred = None
+
+        # Evaluation metrics
         self.accuracy = None
         self.classification_report = None
         self.confusion_matrix = None
-        self.feature_importance = None
-        self.model_name = None
+
+        
         self.target_column = self.sharedState.target_column
         self.original_data = self.dataPreProcessor.return_original_data()
         self.dataPreProcessor.preprocess()
         self.X = self.dataPreProcessor.df.drop(columns=[self.target_column])
         self.y = self.dataPreProcessor.df[self.target_column]
+
         self.split_data()
 
 
     def split_data(self):
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y, test_size=0.2, random_state=42)
+        if self.X.shape[1] > 100:
+            self.dataPreProcessor.reduce_features()
+
+        if not self.sharedState.get_has_split():
+            self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y, test_size=0.2, random_state=42)
+
+    def train_model(self,model_name):
+        self.model_name = model_name
+        match model_name:
+            case 'Random Forest':
+                from sklearn.ensemble import RandomForestClassifier
+                self.model = RandomForestClassifier()
+            case 'Decision Tree':
+                from sklearn.tree import DecisionTreeClassifier
+                self.model = DecisionTreeClassifier()
+            case 'Logistic Regression':
+                from sklearn.linear_model import LogisticRegression
+                self.model = LogisticRegression()
+            case 'KNN':
+                from sklearn.neighbors import KNeighborsClassifier
+                self.model = KNeighborsClassifier()
+            case 'SVM':
+                from sklearn.svm import SVC
+                self.model = SVC()
+            case 'Naive Bayes':
+                from sklearn.naive_bayes import GaussianNB
+                self.model = GaussianNB()
+            case 'XGBoost':
+                from xgboost import XGBClassifier
+                self.model = XGBClassifier()
+            case 'LightGBM':
+                from lightgbm import LGBMClassifier
+                self.model = LGBMClassifier()
+            case 'CatBoost':   
+                from catboost import CatBoostClassifier
+                self.model = CatBoostClassifier()
+            case 'clustering':
+                from sklearn.cluster import KMeans
+                self.model = KMeans(n_clusters=3)
+            case 'Linear Regression':
+                from sklearn.linear_model import LinearRegression
+                self.model = LinearRegression()
+            case _:
+                print('Invalid model name')
+        self.model.fit(self.X_train,self.y_train)
+        self.sharedState.set_training_finish(True)
+
+
+    def predict(self):
+        self.y_pred = self.model.predict(self.X_test)
+
+        self.sharedState.set_prediction_finish(True)
+
+    def evaluate(self):
+        from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+        self.accuracy = accuracy_score(self.y_test, self.y_pred)
+        self.classification_report = classification_report(self.y_test, self.y_pred)
+        self.confusion_matrix = confusion_matrix(self.y_test, self.y_pred)
+
+        self.sharedState.set_testing_finish(True)
+
+    def run(self):
+        self.train_model(self.model_name)
+        self.predict()
+        self.evaluate()
+
+
+
 
     
 
