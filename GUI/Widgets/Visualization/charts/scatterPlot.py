@@ -2,16 +2,20 @@ import customtkinter as ctk
 import pandas as pd
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from Controller.ChartHandler import ChartHandler
+
+
+
+import matplotlib.pyplot as plt
 from Controller.dataPreProcecing import DataPreProcessor as PreD
 import os
 
 class ScatterPlot(ctk.CTkFrame):
-    def __init__(self, parent, switch_page):
+    def __init__(self, parent, switch_page,sharedState):
         super().__init__(parent)
         self.switch_page = switch_page
         self.selected_x_column = None
         self.selected_y_column = None
-        
+        self.sharedState = sharedState 
         # File structure
         current_dir = os.path.dirname(os.path.abspath(__file__))
         root_dir = os.path.join(current_dir, "..", "..", "..", "..")
@@ -96,18 +100,27 @@ class ScatterPlot(ctk.CTkFrame):
         self.plot_scatter()
 
     def plot_scatter(self):
+        print("target: ",self.sharedState.get_target_column())
         """Plot scatter plot"""
-        if not self.selected_x_column :
+        if not self.selected_x_column:
             self.selected_x_column = self.data.columns[0]
-        if not self.selected_y_column :
+        if not self.selected_y_column:
             self.selected_y_column = self.data.columns[1]
 
         # Clear any previous chart
         for widget in self.plot_frame.winfo_children():
             widget.destroy()
 
-        visualizer = ChartHandler(self.data)
-        fig = visualizer.plot_scatter(self.selected_x_column, self.selected_y_column)
+        # Create scatter plot using Matplotlib
+        fig, ax = plt.subplots()
+        scatter = ax.scatter(self.data[self.selected_x_column], self.data[self.selected_y_column], c=self.data[self.sharedState.get_target_column()], cmap='viridis')  
+        ax.set_xlabel(self.selected_x_column)
+        ax.set_ylabel(self.selected_y_column)
+        ax.set_title('Scatter Plot')
+
+        # Add color bar
+        cbar = plt.colorbar(scatter, ax=ax)
+        cbar.set_label('Hue')
 
         canvas = FigureCanvasTkAgg(fig, self.plot_frame)
         canvas.get_tk_widget().pack(fill="both", expand=True)

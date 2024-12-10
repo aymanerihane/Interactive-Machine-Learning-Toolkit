@@ -1,5 +1,7 @@
-class SharedState:
+
+class SharedState():
     def __init__(self):
+        super().__init__()
         self.file_uploaded = False
         self.test_file_uploaded = False
         self.has_target = True # Default value for the checkbox
@@ -7,6 +9,17 @@ class SharedState:
         self.has_split= False # Default value for the checkbox
         self.training_finish = False
         self.testing_finish = False
+        
+
+        # Define color palette and fonts
+        self.PRIMARY_COLOR = "#497AAD"
+        self.HOVER_COLOR = "#357ABD"
+        self.SECONDARY_COLOR = "#F5F5F5"
+        self.TEXT_COLOR = "#4A4A4A"
+        self.WHITE = "#FFFFFF"
+        self.ERROR_COLOR = "#FF5A5F"
+
+        
 
     # Setters
 

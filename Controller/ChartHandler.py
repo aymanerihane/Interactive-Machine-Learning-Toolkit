@@ -28,7 +28,7 @@ class ChartHandler:
         plt.title(f"Histogram of {column}")
         return plt.gcf()
 
-    def plot_scatter(self, x_column, y_column):
+    def plot_scatter(self, x_column, y_column,target):
         """
         Scatter plot for two numerical columns. If a column is encoded and present in 
         self.categorical_mappings, it uses the original values for coloring.
@@ -46,9 +46,9 @@ class ChartHandler:
         for column in [x_column, y_column]:
             if column in self.categorical_mappings:
                 # Decode the categorical column using the mappings
-                unique_values = self.categorical_mappings[column]
-                color_labels = self.df[column].map({i: val for i, val in enumerate(unique_values)})
-                legend_title = column
+                unique_values = self.categorical_mappings[target]
+                color_labels = self.df[target].map({i: val for i, val in enumerate(unique_values)})
+                legend_title = target
                 break  # Use the first categorical column found
 
         if color_labels is not None:

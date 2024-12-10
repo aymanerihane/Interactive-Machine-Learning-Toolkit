@@ -19,10 +19,11 @@ class MainApp(ctk.CTk):
         self.sharedState = sharedState
         self.title("Multi-Page Application")
         self.geometry("1100x700")
+        self.configure(fg_color="#F5F5F5")  # Set background to light gray
 
         # Add HeaderWidget to the main window
         self.header = HeaderWidget(self, text="HOME")
-        self.header.pack(pady=10, padx=10, fill="both")
+        self.header.pack(pady=10, padx=10, fill="x")
 
         self.pages = {}  # Store page instances
         self.show_page("home")  # Initially show the home page
@@ -33,30 +34,26 @@ class MainApp(ctk.CTk):
     def destroy(self):
         """Override the destroy method to handle any cleanup before closing."""
         print("Destroying the application...")
-        
-        # Cancel any ongoing events (like 'after' events)
         for widget in self.winfo_children():
-            widget.after_cancel(widget.winfo_id())  # Cancel any active 'after' events on widgets
-        
-        # Perform other cleanup tasks if needed (e.g., stop any background threads, etc.)
+            try:
+                widget.after_cancel(widget.winfo_id())
+            except:
+                pass
+        super().destroy()
 
-        super().destroy()  # Call the parent class's destroy method to ensure the app closes properly
-
-    def initialize_page(self, page_name,reinitialize=False):
+    def initialize_page(self, page_name, reinitialize=False):
         if reinitialize or page_name not in self.pages:
             if page_name in self.pages:
                 # Remove the old page instance if reinitializing
                 self.pages[page_name].destroy()
                 del self.pages[page_name]
 
-
-        """Initialize and store the page in the dictionary if not already initialized."""
+        # Initialize and store the page in the dictionary if not already initialized
         if page_name == "home":
-            self.pages[page_name] = HomePage(self, switch_page=self.show_page,sharedState=self.sharedState)
+            self.pages[page_name] = HomePage(self, switch_page=self.show_page, sharedState=self.sharedState)
         elif page_name == "visualization":
-            self.pages[page_name] = VisualizationPage(self, switch_page=self.show_page,sharedState=self.sharedState)
+            self.pages[page_name] = VisualizationPage(self, switch_page=self.show_page, sharedState=self.sharedState)
         else:
-            # Dynamically initialize other pages
             chart_classes = {
                 "histograme": Histograme,
                 "scatterplot": ScatterPlot,
@@ -72,30 +69,19 @@ class MainApp(ctk.CTk):
                 self.pages[page_name] = chart_classes[page_name](self, switch_page=self.show_page, sharedState=self.sharedState)
 
     def show_page(self, page_name):
-        """Switch to a specific page, initializing it if necessary."""
-        page_name = page_name.replace(" ", "").lower()  # Normalize page name
-
-         # Reinitialize dynamic pages to reflect updated data
+        page_name = page_name.replace(" ", "").lower()
         dynamic_pages = [
             "histograme", "scatterplot", "piechart", "boxplot", 
             "heatmap", "table", "pairplots", "violinplots", "stackedbarcharts"
         ]
         if page_name in dynamic_pages:
             self.initialize_page(page_name, reinitialize=True)
-        
-        # Initialize the page if it hasn't been initialized yet
         if page_name not in self.pages:
             self.initialize_page(page_name)
-
-        # Hide all pages
         for page in self.pages.values():
             page.pack_forget()
-
-        # Show the selected page
         self.pages[page_name].pack(expand=True, fill="both")
-
-        # Update the header text dynamically using the page name
-        self.header.update_text(page_name.capitalize())  # Capitalize to make it look cleaner
+        self.header.update_text(page_name.capitalize())
 
 if __name__ == "__main__":
     sharedState = SharedState()
