@@ -10,11 +10,11 @@ from Controller.dataPreProcecing import DataPreProcessor as PreD
 
 
 class DataInfo(ctk.CTkFrame):
-    def __init__(self, parent, sharedState):
+    def __init__(self, parent, sharedState, refresh_data_stats):
         super().__init__(parent)
         self.statTestDataUpload = "disabled"
         self.sharedState = sharedState
-
+        self.refresh_data_stats = refresh_data_stats
         # Define the fonts
         self.FONT_TITLE = ctk.CTkFont(size=18, weight="bold")
         self.FONT_LABEL = ctk.CTkFont(size=14)
@@ -114,10 +114,11 @@ class DataInfo(ctk.CTkFrame):
             root_dir = os.path.join(current_dir,"..", "..","..")
             self.csv_file = os.path.join(root_dir, "data/csv_file.csv")
             self.preprocess = PreD(self.csv_file)
+            self.preprocess.set_data_stats(self.refresh_data_stats)
         except Exception as e:
             print(f"the file <{self.csv_file} > can't be loaded")
-            # raise e
-            return
+            raise e
+            # return
         data = self.preprocess.return_original_data()
         return data
 

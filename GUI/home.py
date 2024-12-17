@@ -4,6 +4,7 @@ from PIL import Image
 import os
 from Widgets.HomePage.data_info import DataInfo
 from Widgets.HomePage.functionality import FunctionalitySection
+from Widgets.HomePage.data_stats import DataStats
 
 class HomePage(ctk.CTkFrame):
     def __init__(self, parent,switch_page,sharedState):
@@ -31,17 +32,26 @@ class HomePage(ctk.CTkFrame):
         ####################################
         #       Info Section
         ####################################
-        self.data_info = DataInfo(self,self.sharedState)
+        self.data_info = DataInfo(self,self.sharedState,self.refresh_data_stats)
         self.data_info.pack(pady=0, padx=0, fill="x")
         
         ####################################
         #       Functionality Section
         ####################################
 
-        self.functionality = FunctionalitySection(self,self.sharedState)
-        self.functionality.pack(pady=0, padx=0, fill="x")
+        # self.functionality = FunctionalitySection(self,self.sharedState)
+        # self.functionality.pack(pady=0, padx=0, fill="x")
 
 
+        ####################################
+        #       Details Section
+        ####################################
+        self.data_stat = DataStats(self,self.sharedState)
+        self.data_stat.pack(pady=0, padx=0, fill="x")
+
+    def refresh_data_stats(self):
+        """Refresh the DataStats widget."""
+        self.data_stat.update_stats()
 
 
 

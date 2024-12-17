@@ -31,6 +31,25 @@ class DataPreProcessor:
         self.tfidf_vectorizer = TfidfVectorizer()  # For text data
 
 
+
+    def set_data_stats(self,refresh_data_stats):
+        """
+        Set the data statistics in the shared state.
+        """
+        nan_values = self.df.isnull().sum().sum()
+        missing_values = self.df.isna().sum().sum()
+        num_classes = len(self.df[self.sharedState.target_culumn].unique()) if self.sharedState.target_culumn is not None else 0
+        data_shape = self.df.shape
+        num_categorical_cols = self.df.select_dtypes(include=['object']).shape[1]
+        num_numerical_cols = self.df.select_dtypes(include=['float64', 'int64']).shape[1]
+        balanced = 'Yes' if num_classes > 1 and self.df[self.sharedState.target_culumn].value_counts(normalize=True).min() > 0.05 else 'No'
+        
+        self.sharedState.set_data_stats(nan_values, missing_values, num_classes, data_shape,balanced, num_categorical_cols, num_numerical_cols)
+        print("Data stats set")
+        print("Nan values: ", nan_values, "Missing values: ", missing_values, "Number of classes: ", num_classes, "Data shape: ", data_shape, "Number of categorical columns: ", num_categorical_cols, "Number of numerical columns: ", num_numerical_cols)
+
+        refresh_data_stats()
+
     def reduce_features(self, threshold=0.9):
         """
         Reduce the number of features using correlation.

@@ -18,7 +18,16 @@ class SharedState():
         self.features = None
         self.task = None
         
-        
+
+        ##data stats
+        self.number_of_nan_values = None
+        self.number_of_missing_values = None
+        self.number_of_classes = None
+        self.data_shape = None
+        self.data_balanced = None 
+        self.number_of_categorical_columns = None
+        self.number_of_numerical_columns = None
+
 
         # Data
         self.data = None
@@ -34,10 +43,20 @@ class SharedState():
         self.TEXT_COLOR = "#4A4A4A"
         self.WHITE = "#FFFFFF"
         self.ERROR_COLOR = "#FF5A5F"
+        self.DARK_COLOR = "#333333"
 
         
 
     # Setters
+
+    def set_data_stats(self, nan, missing, classes, shape, balanced, cat, num):
+        self.number_of_nan_values = nan
+        self.number_of_missing_values = missing
+        self.number_of_classes = classes
+        self.data_shape = shape
+        self.data_balanced = balanced
+        self.number_of_categorical_columns = cat
+        self.number_of_numerical_columns = num
 
     def set_columns(self, columns):
         self.columns = columns
@@ -82,6 +101,10 @@ class SharedState():
         self.prediction_finish = value
 
     # Getters
+
+    def get_data_stats(self):
+        return self.number_of_nan_values, self.number_of_missing_values, self.number_of_classes, self.data_shape, self.data_balanced, self.number_of_categorical_columns, self.number_of_numerical_columns
+    
 
     def get_columns(self):
         print("Columns: ", self.columns)
