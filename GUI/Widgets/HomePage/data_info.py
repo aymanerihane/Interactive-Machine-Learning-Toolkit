@@ -109,13 +109,14 @@ class DataInfo(ctk.CTkFrame):
     def load_file(self):
         
 
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        root_dir = os.path.join(current_dir,"..", "..","..")
-        self.csv_file = os.path.join(root_dir, "Data/csv_file.csv")
         try:
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            root_dir = os.path.join(current_dir,"..", "..","..")
+            self.csv_file = os.path.join(root_dir, "data/csv_file.csv")
             self.preprocess = PreD(self.csv_file)
-        except:
-            print("No file has uploaded yet")
+        except Exception as e:
+            print(f"the file <{self.csv_file} > can't be loaded")
+            # raise e
             return
         data = self.preprocess.return_original_data()
         return data

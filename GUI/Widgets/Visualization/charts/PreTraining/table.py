@@ -121,7 +121,7 @@ class Table(ctk.CTkFrame):
         """Load and preprocess data"""
         try:
             preprocessor = PreD(self.csv_file)
-            return preprocessor.preprocess(just_clean=True)
+            return preprocessor.return_original_data()
         except FileNotFoundError:
             raise FileNotFoundError(f"CSV file not found at: {self.csv_file}")
         except Exception as e:

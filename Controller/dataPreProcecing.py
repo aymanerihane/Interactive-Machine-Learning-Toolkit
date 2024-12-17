@@ -4,13 +4,21 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler, LabelEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.feature_extraction.text import TfidfVectorizer
+from Controller.sharedState import SharedState
 
 class DataPreProcessor:
     
     def __init__(self, file_path):
         try:
             self.df = pd.read_csv(file_path)
+            self.sharedState = SharedState()
+            self.sharedState.set_file_uploaded(True)
+            self.set_data_info()
+
             self.original_data = self.df.copy()  # Save a copy of the original data
+            self.sharedState.set_original_data(self.original_data)
+            self.sharedState.set_columns(self.df.columns.tolist())
+            self.sharedState.set_data(self.df)
         except FileNotFoundError:
             raise FileNotFoundError(f"CSV file not found at: {file_path}")
         
@@ -21,6 +29,7 @@ class DataPreProcessor:
         self.scaler = StandardScaler()  # For scaling numerical data
         self.onehot_encoder = OneHotEncoder(handle_unknown='ignore', sparse_output=False)  # For one-hot encoding
         self.tfidf_vectorizer = TfidfVectorizer()  # For text data
+
 
     def reduce_features(self, threshold=0.9):
         """
@@ -47,6 +56,7 @@ class DataPreProcessor:
     def clean_data(self):
         """
         Clean missing values in numerical and categorical columns.
+
         """
         # Categorical columns
         for column in self.df.select_dtypes(include=['object']).columns:
@@ -68,27 +78,6 @@ class DataPreProcessor:
         return self.df
 
 
-
-
-    def encode_categorical(self):
-        """
-        Encode categorical columns and save the mapping of original values to encoded values.
-        """
-        cat_cols = self.df.select_dtypes(include=['object']).columns
-        for col in cat_cols:
-            # Create a mapping of unique values to numeric values
-            unique_values = self.df[col].unique()
-            value_mapping = {value: idx for idx, value in enumerate(unique_values)}
-            reverse_mapping = {idx: value for value, idx in value_mapping.items()}
-            
-            # Save the mapping for later use
-            self.categorical_mappings[col] = reverse_mapping
-            
-            # Replace column values with encoded values
-            self.df[col] = self.df[col].map(value_mapping)
-        
-        return self.df
-    
     def get_unique_categorical_values(self):
         """
         Get the unique values from categorical columns in their original form.
@@ -105,7 +94,6 @@ class DataPreProcessor:
             unique_values_dict[col] = self.df[col].unique().tolist()
         
         return unique_values_dict
-
 
     def label_encode(self):
         """
@@ -145,26 +133,186 @@ class DataPreProcessor:
             self.df = self.df.drop(text_column, axis=1).join(tfidf_df)
         return self.df
 
-    def preprocess(self,just_clean=False):
-        """
-        Apply all preprocessing steps.
-        """
-        # Clean missing data
-        self.df = self.clean_data()
-        if just_clean:
-            return self.df
+    def set_data_info(self):
+        """task (str): 'regression' or 'classification'.
+            data_type (str): 'continuous', 'categorical', or 'mixed'.
+            size (str): 'small' or 'large'.
+            features (str): 'low' or 'high'.
+            balance (str, optional): 'balanced' or 'imbalanced' (only for classification).
+            """
+        #find the task using the target column
+        if self.sharedState.get_target_column() is not None:
+            if self.df[self.sharedState.target_column].dtype == 'object':
+                task = 'classification'    
+            else:
+                task = 'regression'
         else:
-            self.unique_categorical_values = self.get_unique_categorical_values()
-            # Scale numerical data
-            self.df = self.scale_data()
-            # Encode categorical variables
-            # self.df = self.encode_categorical()
-            # Label encode if needed
-            self.df = self.label_encode()
-            # Handle date columns
-            self.df = self.handle_dates()
+            task = None
         
-        print(self.df.head())  # Print the processed DataFrame
-        return self.df, self.unique_categorical_values
+        #find the data type
+        if self.df.select_dtypes(include=['object']).shape[1] == self.df.shape[1]:
+            type = 'categorical'
+        elif self.df.select_dtypes(include=['float64', 'int64']).shape[1] == self.df.shape[1]:
+            type = 'continuous'
+        else:
+            type = 'mixed'
 
+        #find the size of the data
+        if self.df.shape[0] < 1000:
+            size = 'small'
+        else:
+            size = 'large'
+
+        #find the number of features
+        if self.df.shape[1] < 50:
+            features = 'low'
+        else:
+            features = 'high'   
+
+        #find the balance of the data
+        if task == 'classification':
+            if self.df[self.sharedState.target_column].value_counts(normalize=True).min() < 0.05:
+                balance = 'imbalanced'
+            else:
+                balance = 'balanced'
+        else:
+            balance = None
+
+        self.sharedState.set_data_info(task, type, size, features, balance)
+        print("Data info set")
+        print("Task: ", task, "Type: ", type, "Size: ", size, "Features: ", features, "Balance: ", balance)
+
+    # auto preprocess methods
+    def auto_preprocessing(self):
+        """
+        Automatically apply the best preprocessing steps based on dataset characteristics.
+        """
+        # Retrieve dataset characteristics
+        task, data_type, size, features, balance = self.sharedState.get_data_info()
+        applied_steps = []
+
+        # Step 1: Handle missing values
+        applied_steps.append("Handling missing values")
+        self.clean_data()
+
+        # Step 2: Handle data type-specific preprocessing
+        if data_type == 'categorical':
+            applied_steps.append("Applying label encoding or one-hot encoding for categorical data")
+            self.df = self.apply_categorical_preprocessing()
+        elif data_type == 'continuous':
+            applied_steps.append("Scaling numerical data")
+            self.scale_data()
+        elif data_type == 'mixed':
+            applied_steps.append("Scaling numerical data and encoding categorical data")
+            self.scale_data()
+            self.df = self.apply_categorical_preprocessing()
+
+        # Step 3: Feature count considerations
+        if features == 'high':
+            applied_steps.append("Applying feature selection or dimensionality reduction")
+            self.reduce_features(threshold=0.85)
+        elif features == 'low':
+            applied_steps.append("Applying feature augmentation (e.g., polynomial features, interaction terms)")
+            self.df = self.apply_feature_augmentation()
+
+        # Step 4: Handle imbalanced data (only for classification)
+        if task == 'classification' and balance == 'imbalanced':
+            applied_steps.append("Balancing classes (e.g., using SMOTE or class weighting)")
+            self.df = self.balance_classes()
+
+        # Step 5: Handle outliers (only for continuous features)
+        if data_type in ['continuous', 'mixed']:
+            applied_steps.append("Handling outliers (e.g., using z-score or IQR)")
+            self.df = self.handle_outliers()
+
+        # Step 6: Task-specific preprocessing
+        if task == 'classification':
+            applied_steps.append("Binarizing target column for binary classification tasks")
+            self.df = self.binarize_target()
+        elif task == 'regression':
+            applied_steps.append("Applying log transformation for skewed continuous features")
+            self.df = self.transform_skewed_features()
+
+        # Step 7: General preprocessing
+        applied_steps.append("Removing duplicate rows")
+        self.df.drop_duplicates(inplace=True)
+        applied_steps.append("Checking and standardizing data types")
+        self.standardize_data_types()
+
+        print("Applied preprocessing steps:")
+        for step in applied_steps:
+            print(f"- {step}")
+        return self.df
+
+    def apply_categorical_preprocessing(self):
+        """
+        Apply encoding for categorical data.
+        """
+        cat_cols = self.df.select_dtypes(include=['object']).columns # Select categorical columns
+        for col in cat_cols:
+            if len(self.df[col].unique()) <= 10:  # Use one-hot encoding for low cardinality
+                onehot_encoded = self.onehot_encoder.fit_transform(self.df[[col]])
+                onehot_df = pd.DataFrame(onehot_encoded, columns=self.onehot_encoder.get_feature_names_out([col]))
+                self.df = pd.concat([self.df.drop(columns=[col]), onehot_df], axis=1)
+            else:  # Use label encoding for high cardinality
+                self.df[col] = self.label_encoder.fit_transform(self.df[col])
+        return self.df
+
+    def apply_feature_augmentation(self):
+        """
+        Apply feature augmentation for low feature count datasets.
+        """
+        # Add polynomial features
+        poly_features = self.df.select_dtypes(include=['float64', 'int64']).columns
+        for col in poly_features:
+            self.df[col + '_squared'] = self.df[col] ** 2
+            self.df[col + '_cubed'] = self.df[col] ** 3
+        return self.df
     
+    def balance_classes(self):
+        """
+        Balance imbalanced classes using SMOTE.
+        """
+        from imblearn.over_sampling import SMOTE
+        
+        smote = SMOTE(random_state=42)
+        X_resampled, y_resampled = smote.fit_resample(self.df.drop(columns=[self.target_column]), self.df[self.target_column])
+        self.df = pd.concat([X_resampled, y_resampled], axis=1)
+        return self.df
+    
+    def handle_outliers(self):
+        """
+        Handle outliers in numerical columns using the IQR method.
+        """
+        num_cols = self.get_numerical_columns()
+        for col in num_cols:
+            Q1 = self.df[col].quantile(0.25)
+            Q3 = self.df[col].quantile(0.75)
+            IQR = Q3 - Q1
+            lower_bound = Q1 - 1.5 * IQR
+            upper_bound = Q3 + 1.5 * IQR
+            self.df[col] = np.where(self.df[col] < lower_bound, lower_bound, self.df[col])
+            self.df[col] = np.where(self.df[col] > upper_bound, upper_bound, self.df[col])
+        return self.df
+
+    def transform_skewed_features(self):
+        """
+        Apply log transformation to skewed numerical columns.
+        """
+        num_cols = self.get_numerical_columns()
+        for col in num_cols:
+            if self.df[col].skew() > 1:  # Check if skewness > 1 (highly skewed)
+                self.df[col] = np.log1p(self.df[col])  # Apply log(1+x) transformation
+        return self.df
+    
+    def standardize_data_types(self):
+        """
+        Ensure all columns have appropriate data types.
+        """
+        for col in self.df.columns:
+            if self.df[col].dtype == 'object':
+                self.df[col] = self.df[col].astype('string')  # Standardize text columns as 'string'
+            elif self.df[col].dtype in ['float64', 'int64']:
+                self.df[col] = self.df[col].astype('float64')  # Standardize numerical columns as 'float64'
+        return self.df
+

@@ -87,7 +87,7 @@ class BaseChart(ctk.CTkFrame):
         """Load and preprocess data"""
         try:
 
-            self.data,self.mappings  = self.preprocess.preprocess()
+            self.data,self.mappings  = self.preprocess.auto_preprocessing()
             
         except FileNotFoundError:
             raise FileNotFoundError(f"CSV file not found at: {self.csv_file}")

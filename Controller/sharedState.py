@@ -10,6 +10,21 @@ class SharedState():
         self.training_finish = False
         self.testing_finish = False
         self.prediction_finish = False
+
+        #data info
+        self.data_type = None
+        self.balance = None
+        self.size = None
+        self.features = None
+        self.task = None
+        
+        
+
+        # Data
+        self.data = None
+        self.original_data = None
+        self.columns = None
+
         
 
         # Define color palette and fonts
@@ -23,6 +38,22 @@ class SharedState():
         
 
     # Setters
+
+    def set_columns(self, columns):
+        self.columns = columns
+
+    def set_data_info(self, task, type, size, features, balance):
+        self.data_type = type
+        self.balance = balance
+        self.size = size
+        self.features = features
+        self.task = task
+
+    def set_data(self, data):
+        self.data = data
+    
+    def set_original_data(self, data):
+        self.original_data = data
 
     def set_file_uploaded(self, value):
         self.file_uploaded = value
@@ -51,6 +82,19 @@ class SharedState():
         self.prediction_finish = value
 
     # Getters
+
+    def get_columns(self):
+        print("Columns: ", self.columns)
+        return self.columns
+
+    def get_data(self):
+        return self.data
+    
+    def get_original_data(self):
+        return self.original_data
+
+    def get_data_info(self):
+        return self.data_type, self.balance, self.size, self.features
 
     def get_test_file_uploaded(self):
         return self.test_file_uploaded
