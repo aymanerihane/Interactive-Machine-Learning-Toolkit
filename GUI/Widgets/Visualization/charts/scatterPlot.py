@@ -53,7 +53,7 @@ class ScatterPlot(ctk.CTkFrame):
     def load_data(self):
         """Load and preprocess data"""
         try:
-            self.data = PreD(self.csv_file).clean_data()
+            self.data = PreD(self.csv_file,sharedState=self.sharedState).clean_data()
         except FileNotFoundError:
             raise FileNotFoundError(f"CSV file not found at: {self.csv_file}")
 

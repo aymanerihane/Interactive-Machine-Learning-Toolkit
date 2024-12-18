@@ -113,7 +113,7 @@ class DataInfo(ctk.CTkFrame):
             current_dir = os.path.dirname(os.path.abspath(__file__))
             root_dir = os.path.join(current_dir,"..", "..","..")
             self.csv_file = os.path.join(root_dir, "data/csv_file.csv")
-            self.preprocess = PreD(self.csv_file)
+            self.preprocess = PreD(self.csv_file,sharedState=self.sharedState)
             self.preprocess.set_data_stats(self.refresh_data_stats)
         except Exception as e:
             print(f"the file <{self.csv_file} > can't be loaded")
@@ -140,10 +140,10 @@ class DataInfo(ctk.CTkFrame):
             #add a radio button 
             
             ctk.CTkRadioButton(self.scrollable_frame, 
-                            text=column, text_color="white",
-                            value=column,
-                            command=lambda value=column: self.sharedState.set_target_column(value), 
-                            variable=self.radio_var).grid(row=i, column=0, pady=(0, 10))
+                                        text=f"{i}: {column}", text_color="white",
+                                        value=column,
+                                        command=lambda value=column, index=i: self.sharedState.set_target_column(value, index = index),  # Set the target column and the index
+                                        variable=self.radio_var).grid(row=i, column=0, pady=(0, 10))
         
         #setting the default radio value by the last column
         self.radio_var.set(columns[-1])

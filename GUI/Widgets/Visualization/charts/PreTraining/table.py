@@ -30,8 +30,20 @@ class Table(ctk.CTkFrame):
         )
         self.return_button.grid(row=0, column=0, padx=20, pady=10, sticky="w")
 
+        #see data preprocess or original data
+        self.data_option = ctk.StringVar(value="original")  # Default to preprocessed data
+        # Option menu to select data type
+        self.data_option_menu = ctk.CTkOptionMenu(
+            self,
+            variable=self.data_option,
+            values=["original","preprocessed"],
+            command=self.switch_data
+        )
+        self.data_option_menu.grid(row=0, column=1, padx=20, pady=10, sticky="w")
+
         # Load data
-        self.data = self.load_data()
+        # self.data = self.load_data()
+        self.data = self.sharedState.get_data()
 
         if self.data is not None:
             # Create checkboxes for columns
@@ -41,8 +53,25 @@ class Table(ctk.CTkFrame):
             # Create table
             self.create_table()
 
+        
+
+        
+
+    def switch_data(self , *args):
+        """Switch between preprocessed and original data"""
+        print("starting switching data type...")
+        if self.data_option.get() == "preprocessed":
+            self.data = self.sharedState.get_data()
+        else:
+            self.data = self.sharedState.get_original_data()
+
+        # Update table with new data
+        self.update_table_columns()
+        
+
     def create_column_checkboxes(self):
         """Create checkboxes for each column to toggle visibility"""
+
         checkbox_frame = ctk.CTkScrollableFrame(self, orientation="horizontal", corner_radius=10, height=35)  # Frame for checkboxes
         checkbox_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
 
@@ -117,16 +146,18 @@ class Table(ctk.CTkFrame):
         for _, row in self.data.iterrows():
             self.treeview.insert("", "end", values=[row[col] for col in current_columns])
 
-    def load_data(self):
-        """Load and preprocess data"""
-        try:
-            preprocessor = PreD(self.csv_file)
-            return preprocessor.return_original_data()
-        except FileNotFoundError:
-            raise FileNotFoundError(f"CSV file not found at: {self.csv_file}")
-        except Exception as e:
-            print(f"Error loading data: {e}")
-            return None
+    # def load_data(self):
+    #     """Load and preprocess data"""
+    #     try:
+    #         preprocessor = PreD(self.csv_file,sharedState=self.sharedState)
+    #         nw_data = preprocessor.auto_preprocessing()
+    #         # return preprocessor.return_original_data()
+    #         return nw_data
+    #     except FileNotFoundError:
+    #         raise FileNotFoundError(f"CSV file not found at: {self.csv_file}")
+    #     except Exception as e:
+    #         print(f"Error loading data: {e}")
+    #         return None
 
     def return_to_previous_page(self):
         self.switch_page("visualization")

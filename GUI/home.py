@@ -39,8 +39,8 @@ class HomePage(ctk.CTkFrame):
         #       Functionality Section
         ####################################
 
-        # self.functionality = FunctionalitySection(self,self.sharedState)
-        # self.functionality.pack(pady=0, padx=0, fill="x")
+        self.functionality = FunctionalitySection(self,self.sharedState)
+        self.functionality.pack(pady=0, padx=0, fill="x")
 
 
         ####################################

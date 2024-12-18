@@ -8,17 +8,30 @@ from Controller.sharedState import SharedState
 
 class DataPreProcessor:
     
-    def __init__(self, file_path):
-        try:
-            self.df = pd.read_csv(file_path)
+    def __init__(self, file_path,sharedState = None):
+        self.df = pd.read_csv(file_path)
+        if sharedState is None:
+            print("shared state is none")
             self.sharedState = SharedState()
+
+        else:
+            self.sharedState = sharedState
+        try:
+
+
             self.sharedState.set_file_uploaded(True)
-            self.set_data_info()
 
             self.original_data = self.df.copy()  # Save a copy of the original data
             self.sharedState.set_original_data(self.original_data)
             self.sharedState.set_columns(self.df.columns.tolist())
+            # self.sharedState.set_target_column(self.df.columns[-1])
             self.sharedState.set_data(self.df)
+            self.set_data_info()
+
+
+            
+
+            
         except FileNotFoundError:
             raise FileNotFoundError(f"CSV file not found at: {file_path}")
         
@@ -161,12 +174,16 @@ class DataPreProcessor:
             """
         #find the task using the target column
         if self.sharedState.get_target_column() is not None:
-            if self.df[self.sharedState.target_column].dtype == 'object':
+            if self.df[self.sharedState.get_target_column()].dtype == 'object' or len(self.df[self.sharedState.get_target_column()].unique()) < 10:
                 task = 'classification'    
             else:
                 task = 'regression'
         else:
             task = None
+
+        print("Task: ", task)
+
+        
         
         #find the data type
         if self.df.select_dtypes(include=['object']).shape[1] == self.df.shape[1]:
@@ -190,12 +207,13 @@ class DataPreProcessor:
 
         #find the balance of the data
         if task == 'classification':
-            if self.df[self.sharedState.target_column].value_counts(normalize=True).min() < 0.05:
+            if self.df[self.sharedState.get_target_column()].value_counts(normalize=True).min() < 0.05:
                 balance = 'imbalanced'
             else:
                 balance = 'balanced'
         else:
             balance = None
+
 
         self.sharedState.set_data_info(task, type, size, features, balance)
         print("Data info set")
@@ -206,8 +224,12 @@ class DataPreProcessor:
         """
         Automatically apply the best preprocessing steps based on dataset characteristics.
         """
+
+        self.unique_categorical_values = self.get_unique_categorical_values()
         # Retrieve dataset characteristics
-        task, data_type, size, features, balance = self.sharedState.get_data_info()
+        data_type, balance, _, features, task = self.sharedState.get_data_info()
+        print("Data type: ", data_type, "Balance: ", balance, "Features: ", features, "Task: ", task)
+
         applied_steps = []
 
         # Step 1: Handle missing values
@@ -217,14 +239,14 @@ class DataPreProcessor:
         # Step 2: Handle data type-specific preprocessing
         if data_type == 'categorical':
             applied_steps.append("Applying label encoding or one-hot encoding for categorical data")
-            self.df = self.apply_categorical_preprocessing()
+            self.df = self.label_encode()
         elif data_type == 'continuous':
             applied_steps.append("Scaling numerical data")
             self.scale_data()
         elif data_type == 'mixed':
             applied_steps.append("Scaling numerical data and encoding categorical data")
             self.scale_data()
-            self.df = self.apply_categorical_preprocessing()
+            self.df = self.label_encode()
 
         # Step 3: Feature count considerations
         if features == 'high':
@@ -247,7 +269,10 @@ class DataPreProcessor:
         # Step 6: Task-specific preprocessing
         if task == 'classification':
             applied_steps.append("Binarizing target column for binary classification tasks")
-            self.df = self.binarize_target()
+            target = self.sharedState.get_target_column()   
+            if len(self.df[target].unique()) == 2:
+                print('intred')
+                self.df = self.binarize_target()
         elif task == 'regression':
             applied_steps.append("Applying log transformation for skewed continuous features")
             self.df = self.transform_skewed_features()
@@ -261,7 +286,8 @@ class DataPreProcessor:
         print("Applied preprocessing steps:")
         for step in applied_steps:
             print(f"- {step}")
-        return self.df
+        self.sharedState.set_data(self.df)
+        return self.df,self.unique_categorical_values
 
     def apply_categorical_preprocessing(self):
         """
@@ -335,3 +361,18 @@ class DataPreProcessor:
                 self.df[col] = self.df[col].astype('float64')  # Standardize numerical columns as 'float64'
         return self.df
 
+    def get_numerical_columns(self):
+        """
+        Get the names of numerical columns in the dataset.
+        """
+        return self.df.select_dtypes(include=['float64', 'int64']).columns.tolist()
+
+    def binarize_target(self):
+        """
+        Binarize the target column for binary classification tasks.
+        """
+        target_col = self.sharedState.get_target_column()
+        self.df[target_col] = self.df[target_col].apply(lambda x: 1 if x == self.df[target_col].mode()[0] else 0)
+
+        return self.df
+    

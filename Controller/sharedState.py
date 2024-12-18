@@ -57,6 +57,7 @@ class SharedState():
         self.data_balanced = balanced
         self.number_of_categorical_columns = cat
         self.number_of_numerical_columns = num
+        self.index_of_target = None
 
     def set_columns(self, columns):
         self.columns = columns
@@ -84,8 +85,9 @@ class SharedState():
         self.has_target = value
         print("Has target: ", self.has_target)
     
-    def set_target_column(self, value):
+    def set_target_column(self, value, index = None):
         self.target_culumn = value
+        self.index_of_target = self.columns.index(value)
         print("Target column: ", self.target_culumn)
     
     def set_has_split(self, value): 
@@ -117,7 +119,7 @@ class SharedState():
         return self.original_data
 
     def get_data_info(self):
-        return self.data_type, self.balance, self.size, self.features
+        return self.data_type, self.balance, self.size, self.features, self.task
 
     def get_test_file_uploaded(self):
         return self.test_file_uploaded
@@ -143,3 +145,6 @@ class SharedState():
     
     def get_prediction_finish(self):
         return self.prediction_finish
+
+    def get_target_column_index(self):
+        return self.index_of_target
