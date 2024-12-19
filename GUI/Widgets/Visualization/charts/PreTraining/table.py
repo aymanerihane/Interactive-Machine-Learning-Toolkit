@@ -43,7 +43,8 @@ class Table(ctk.CTkFrame):
 
         # Load data
         # self.data = self.load_data()
-        self.data = self.sharedState.get_data()
+        self.data = self.sharedState.get_original_data()
+        print(self.data)
 
         if self.data is not None:
             # Create checkboxes for columns
@@ -57,17 +58,70 @@ class Table(ctk.CTkFrame):
 
         
 
-    def switch_data(self , *args):
+    def switch_data(self, *args):
         """Switch between preprocessed and original data"""
-        print("starting switching data type...")
+        print("Switching data type...")
         if self.data_option.get() == "preprocessed":
             self.data = self.sharedState.get_data()
         else:
             self.data = self.sharedState.get_original_data()
 
-        # Update table with new data
-        self.update_table_columns()
+        # Clear the previous table and checkboxes
+        self.clear_table()
+        self.clear_checkboxes()
+
+        # Recreate checkboxes and table
+        self.create_column_checkboxes()
+        self.create_table()
+
+    def clear_table(self):
+        """Clear the existing table and remove associated widgets"""
+        if hasattr(self, "treeview"):
+            self.treeview.destroy()
+        if hasattr(self, "scroll_x"):
+            self.scroll_x.destroy()
+        if hasattr(self, "scroll_y"):
+            self.scroll_y.destroy()
+
+    def clear_checkboxes(self):
+        """Clear the existing checkboxes and reset the dictionary"""
+        if hasattr(self, "column_checkboxes"):
+            self.column_checkboxes.clear()
+
+        for widget in self.winfo_children():
+            if isinstance(widget, ctk.CTkScrollableFrame):
+                widget.destroy()
+
+    def create_table(self):
+        """Create a table to display the data using ttk.Treeview"""
+        tree_frame = ctk.CTkFrame(self)  # Frame for the table
+        tree_frame.grid(row=2, column=0, sticky="nsew", padx=10, pady=10)
+
+        # Treeview widget for displaying data
+        self.treeview = ttk.Treeview(tree_frame, show="headings")
+        self.treeview.pack(fill="both", expand=True)
+
+        # Add scrollbars
+        self.scroll_x = ttk.Scrollbar(tree_frame, orient="horizontal", command=self.treeview.xview)
+        self.scroll_y = ttk.Scrollbar(tree_frame, orient="vertical", command=self.treeview.yview)
+        self.treeview.configure(xscrollcommand=self.scroll_x.set, yscrollcommand=self.scroll_y.set)
+        self.scroll_x.pack(side="bottom", fill="x")
+        self.scroll_y.pack(side="right", fill="y")
+
+        # Set initial columns and headings
+        self.treeview["columns"] = list(self.data.columns)
+
+        # Set column headers
+        for col in self.data.columns:
+            self.treeview.heading(col, text=col)
+            self.treeview.column(col, width=100, anchor="center")
+
+        # Insert data into the table
+        for _, row in self.data.iterrows():
+            self.treeview.insert("", "end", values=list(row))
+
         
+   
 
     def create_column_checkboxes(self):
         """Create checkboxes for each column to toggle visibility"""
@@ -146,18 +200,6 @@ class Table(ctk.CTkFrame):
         for _, row in self.data.iterrows():
             self.treeview.insert("", "end", values=[row[col] for col in current_columns])
 
-    # def load_data(self):
-    #     """Load and preprocess data"""
-    #     try:
-    #         preprocessor = PreD(self.csv_file,sharedState=self.sharedState)
-    #         nw_data = preprocessor.auto_preprocessing()
-    #         # return preprocessor.return_original_data()
-    #         return nw_data
-    #     except FileNotFoundError:
-    #         raise FileNotFoundError(f"CSV file not found at: {self.csv_file}")
-    #     except Exception as e:
-    #         print(f"Error loading data: {e}")
-    #         return None
 
     def return_to_previous_page(self):
         self.switch_page("visualization")

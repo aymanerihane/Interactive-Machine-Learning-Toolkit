@@ -9,28 +9,18 @@ from Controller.sharedState import SharedState
 class DataPreProcessor:
     
     def __init__(self, file_path,sharedState = None):
-        self.df = pd.read_csv(file_path)
         if sharedState is None:
             print("shared state is none")
             self.sharedState = SharedState()
 
         else:
             self.sharedState = sharedState
+        self.df = pd.read_csv(file_path)
         try:
 
 
             self.sharedState.set_file_uploaded(True)
-
-            self.original_data = self.df.copy()  # Save a copy of the original data
-            self.sharedState.set_original_data(self.original_data)
-            self.sharedState.set_columns(self.df.columns.tolist())
-            # self.sharedState.set_target_column(self.df.columns[-1])
-            self.sharedState.set_data(self.df)
             self.set_data_info()
-
-
-            
-
             
         except FileNotFoundError:
             raise FileNotFoundError(f"CSV file not found at: {file_path}")
@@ -44,6 +34,13 @@ class DataPreProcessor:
         self.tfidf_vectorizer = TfidfVectorizer()  # For text data
 
 
+
+    def set_original_data(self):
+        self.sharedState.set_original_data(self.df)
+
+
+    def set_data(self):
+        self.sharedState.set_data(self.df)
 
     def set_data_stats(self,refresh_data_stats):
         """
@@ -81,8 +78,7 @@ class DataPreProcessor:
         
         return self.df
 
-    def return_original_data(self):
-        return self.original_data
+
     
     
     def clean_data(self):
@@ -98,6 +94,7 @@ class DataPreProcessor:
         for column in self.df.select_dtypes(include=['number']).columns:
             self.df[column] = self.num_imputer.fit_transform(self.df[column].values.reshape(-1, 1))
         
+        self.sharedState.set_data(self.df)
         return self.df
 
     def scale_data(self):
@@ -107,6 +104,9 @@ class DataPreProcessor:
         num_cols = self.df.select_dtypes(include=['float64', 'int64']).columns
         if len(num_cols) > 0:
             self.df[num_cols] = self.scaler.fit_transform(self.df[num_cols])
+        
+        self.sharedState.set_data(self.df)
+
         return self.df
 
 
@@ -134,6 +134,9 @@ class DataPreProcessor:
         cat_cols = self.df.select_dtypes(include=['object']).columns
         for col in cat_cols:
             self.df[col] = self.label_encoder.fit_transform(self.df[col])
+        
+        self.sharedState.set_data(self.df)
+
         return self.df
 
     def handle_dates(self):
@@ -153,6 +156,7 @@ class DataPreProcessor:
                 self.df.drop(columns=[col], inplace=True)  # Drop original date column
             except:
                 continue  # If not a valid date, skip
+        self.sharedState.set_data(self.df)
         return self.df
 
     def process_text(self, text_column):
@@ -163,6 +167,7 @@ class DataPreProcessor:
             tfidf_matrix = self.tfidf_vectorizer.fit_transform(self.df[text_column])
             tfidf_df = pd.DataFrame(tfidf_matrix.toarray(), columns=self.tfidf_vectorizer.get_feature_names_out())
             self.df = self.df.drop(text_column, axis=1).join(tfidf_df)
+        self.sharedState.set_data(self.df)
         return self.df
 
     def set_data_info(self):
@@ -225,6 +230,10 @@ class DataPreProcessor:
         Automatically apply the best preprocessing steps based on dataset characteristics.
         """
 
+        # delete id column if exisct
+        if 'id' in [col.lower() for col in self.df.columns]:
+            self.df.drop(columns=[col for col in self.df.columns if col.lower() == 'id'], inplace=True)
+
         self.unique_categorical_values = self.get_unique_categorical_values()
         # Retrieve dataset characteristics
         data_type, balance, _, features, task = self.sharedState.get_data_info()
@@ -238,7 +247,7 @@ class DataPreProcessor:
 
         # Step 2: Handle data type-specific preprocessing
         if data_type == 'categorical':
-            applied_steps.append("Applying label encoding or one-hot encoding for categorical data")
+            applied_steps.append("Applying label encoding for categorical data")
             self.df = self.label_encode()
         elif data_type == 'continuous':
             applied_steps.append("Scaling numerical data")
@@ -253,7 +262,7 @@ class DataPreProcessor:
             applied_steps.append("Applying feature selection or dimensionality reduction")
             self.reduce_features(threshold=0.85)
         elif features == 'low':
-            applied_steps.append("Applying feature augmentation (e.g., polynomial features, interaction terms)")
+            applied_steps.append("Applying feature augmentation")
             self.df = self.apply_feature_augmentation()
 
         # Step 4: Handle imbalanced data (only for classification)
@@ -263,7 +272,7 @@ class DataPreProcessor:
 
         # Step 5: Handle outliers (only for continuous features)
         if data_type in ['continuous', 'mixed']:
-            applied_steps.append("Handling outliers (e.g., using z-score or IQR)")
+            applied_steps.append("Handling outliers IQR)")
             self.df = self.handle_outliers()
 
         # Step 6: Task-specific preprocessing
@@ -286,22 +295,28 @@ class DataPreProcessor:
         print("Applied preprocessing steps:")
         for step in applied_steps:
             print(f"- {step}")
+
+        # sort column by name and make the target the last column
+        target_col = self.sharedState.get_target_column()
+        cols = sorted([col for col in self.df.columns if col != target_col]) + [target_col]
+        self.df = self.df[cols]
+        
         self.sharedState.set_data(self.df)
         return self.df,self.unique_categorical_values
 
-    def apply_categorical_preprocessing(self):
-        """
-        Apply encoding for categorical data.
-        """
-        cat_cols = self.df.select_dtypes(include=['object']).columns # Select categorical columns
-        for col in cat_cols:
-            if len(self.df[col].unique()) <= 10:  # Use one-hot encoding for low cardinality
-                onehot_encoded = self.onehot_encoder.fit_transform(self.df[[col]])
-                onehot_df = pd.DataFrame(onehot_encoded, columns=self.onehot_encoder.get_feature_names_out([col]))
-                self.df = pd.concat([self.df.drop(columns=[col]), onehot_df], axis=1)
-            else:  # Use label encoding for high cardinality
-                self.df[col] = self.label_encoder.fit_transform(self.df[col])
-        return self.df
+    # def apply_categorical_preprocessing(self):
+    #     """
+    #     Apply encoding for categorical data.
+    #     """
+    #     cat_cols = self.df.select_dtypes(include=['object']).columns # Select categorical columns
+    #     for col in cat_cols:
+    #         if len(self.df[col].unique()) <= 10:  # Use one-hot encoding for low cardinality
+    #             onehot_encoded = self.onehot_encoder.fit_transform(self.df[[col]])
+    #             onehot_df = pd.DataFrame(onehot_encoded, columns=self.onehot_encoder.get_feature_names_out([col]))
+    #             self.df = pd.concat([self.df.drop(columns=[col]), onehot_df], axis=1)
+    #         else:  # Use label encoding for high cardinality
+    #             self.df[col] = self.label_encoder.fit_transform(self.df[col])
+    #     return self.df
 
     def apply_feature_augmentation(self):
         """
@@ -376,3 +391,7 @@ class DataPreProcessor:
 
         return self.df
     
+
+    def reset(self):
+        self.sharedState.set_data(self.sharedState.get_original_data())
+        self.df = self.sharedState.get_original_data()

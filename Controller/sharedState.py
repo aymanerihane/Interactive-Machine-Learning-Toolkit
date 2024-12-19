@@ -9,6 +9,7 @@ class SharedState():
         self.has_split= False 
         self.training_finish = False
         self.testing_finish = False
+        self.preprocessing_finish = False
         self.prediction_finish = False
 
         #data info
@@ -27,12 +28,14 @@ class SharedState():
         self.data_balanced = None 
         self.number_of_categorical_columns = None
         self.number_of_numerical_columns = None
+        
 
 
         # Data
         self.data = None
         self.original_data = None
         self.columns = None
+        self.original_columns = None
 
         
 
@@ -48,6 +51,12 @@ class SharedState():
         
 
     # Setters
+
+    def set_preprocessing_finish(self):
+        self.preprocessing_finish = True
+
+    def set_original_columns(self,value):
+        self.original_columns = value
 
     def set_data_stats(self, nan, missing, classes, shape, balanced, cat, num):
         self.number_of_nan_values = nan
@@ -69,11 +78,15 @@ class SharedState():
         self.features = features
         self.task = task
 
-    def set_data(self, data):
+    def set_data(self, data,first = False):
         self.data = data
+        self.set_columns(data.columns)
+        if first:
+            self.set_target_column(data.columns[-1])
     
     def set_original_data(self, data):
         self.original_data = data
+        # self.original_columns(data.columns)
 
     def set_file_uploaded(self, value):
         self.file_uploaded = value
@@ -85,9 +98,9 @@ class SharedState():
         self.has_target = value
         print("Has target: ", self.has_target)
     
-    def set_target_column(self, value, index = None):
+    def set_target_column(self, value):
+        print("value: ",value)
         self.target_culumn = value
-        self.index_of_target = self.columns.index(value)
         print("Target column: ", self.target_culumn)
     
     def set_has_split(self, value): 
@@ -103,6 +116,9 @@ class SharedState():
         self.prediction_finish = value
 
     # Getters
+
+    def get_original_columns(self):
+        return self.original_columns
 
     def get_data_stats(self):
         return self.number_of_nan_values, self.number_of_missing_values, self.number_of_classes, self.data_shape, self.data_balanced, self.number_of_categorical_columns, self.number_of_numerical_columns
@@ -145,6 +161,9 @@ class SharedState():
     
     def get_prediction_finish(self):
         return self.prediction_finish
+    
+    def get_preprocessing_finish(self):
+        return self.preprocessing_finish
 
     def get_target_column_index(self):
         return self.index_of_target

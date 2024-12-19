@@ -141,7 +141,7 @@ class ChartHandler:
 
     def plot_pair(self,target_column):
         # Pair plot (scatter matrix) of the dataframe
-        plt.figure(figsize=(10, 10))
+        plt.figure(figsize=(10, 6))
         if len(self.df.columns) > 5:
             # take just the 5 first columns and make the hue the target column
             sns.pairplot(self.df[self.df.columns[:5]],hue=target_column)
@@ -149,6 +149,7 @@ class ChartHandler:
         else:
             sns.pairplot(self.df)
             plt.title("Pair Plot")
+
         return plt.gcf()
 
     def plot_stacked_bar(self):

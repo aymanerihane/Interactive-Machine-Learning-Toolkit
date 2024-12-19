@@ -33,7 +33,7 @@ class TrainingProcess():
 
         
         self.target_column = self.sharedState.target_column
-        self.original_data = self.dataPreProcessor.return_original_data()
+        self.original_data = self.sharedState.get_original_data()
         self.dataPreProcessor.auto_preprocessing()
         self.X = self.dataPreProcessor.df.drop(columns=[self.target_column])
         self.y = self.dataPreProcessor.df[self.target_column]

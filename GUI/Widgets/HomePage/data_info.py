@@ -6,6 +6,7 @@ import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 from Controller.dataPreProcecing import DataPreProcessor as PreD
+import pandas as pd
 
 
 
@@ -114,15 +115,20 @@ class DataInfo(ctk.CTkFrame):
             root_dir = os.path.join(current_dir,"..", "..","..")
             self.csv_file = os.path.join(root_dir, "data/csv_file.csv")
             self.preprocess = PreD(self.csv_file,sharedState=self.sharedState)
-            self.preprocess.set_data_stats(self.refresh_data_stats)
+            
         except Exception as e:
             print(f"the file <{self.csv_file} > can't be loaded")
             raise e
             # return
-        data = self.preprocess.return_original_data()
+        data = pd.read_csv(self.csv_file)
+        self.sharedState.set_original_data(data)
+        self.sharedState.set_original_columns(data.columns)
+        self.sharedState.set_data(data)
+        self.preprocess.set_data_stats(self.refresh_data_stats)
         return data
 
-        
+    def get_pre_process(self):
+        return self.preprocess
             
 
     def update_Scrollable_frame(self):
@@ -142,7 +148,7 @@ class DataInfo(ctk.CTkFrame):
             ctk.CTkRadioButton(self.scrollable_frame, 
                                         text=f"{i}: {column}", text_color="white",
                                         value=column,
-                                        command=lambda value=column, index=i: self.sharedState.set_target_column(value, index = index),  # Set the target column and the index
+                                        command=lambda value=column, index=i: self.sharedState.set_target_column(value),  # Set the target column and the index
                                         variable=self.radio_var).grid(row=i, column=0, pady=(0, 10))
         
         #setting the default radio value by the last column
@@ -216,12 +222,20 @@ class DataInfo(ctk.CTkFrame):
             shutil.copy(file, save_path)
 
             print(f"File saved as: {save_path}")
+
+            # Destroy any existing PreD instance
+            if hasattr(self, 'preprocess') and self.preprocess is not None:
+                print("Destroying previous PreD instance...")
+                self.preprocess = None  # Explicitly set to None
+
+                
             self.update_Scrollable_frame()
             if test:
                 self.sharedState.set_test_file_uploaded(True)
             else:
                 self.sharedState.set_file_uploaded(True)
-        
+
+
 
 
 

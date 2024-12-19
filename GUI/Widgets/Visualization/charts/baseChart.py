@@ -96,25 +96,13 @@ class BaseChart(ctk.CTkFrame):
         """Load column names from the CSV file and create buttons."""
         
         # Filter columns based on the flags
-        data = self.preprocess.return_original_data()
+        data = self.sharedState.get_original_data()
         if just_num:
-            print("just_num")
             columns = data.select_dtypes(include=['number']).columns # Filter numerical columns
-            print("*******************")
-            print(columns)
-            print("*******************")
         elif just_cat:
-            print("just_cat")
             columns = data.select_dtypes(exclude=['number']).columns 
-            print("*******************")
-            print(columns)
-            print("*******************")
         else:
-            print("all")
             columns = data.columns
-            print("*******************")
-            print(columns)
-            print("*******************")
 
         if len(columns) == 0:
             error_message = "No type needed of columns found in the data"
@@ -129,26 +117,28 @@ class BaseChart(ctk.CTkFrame):
 
             # Create buttons for each column based on the filtered columns list
             for column in columns:
-                button = ctk.CTkButton(
-                    self.column_button_frame_1,
-                    text=column,
-                    width=100,
-                    command=lambda col=column: self.update_axis(col, 'x')  # Ensure correct column reference is passed
-                )
-                button.pack(side="left", padx=10)
+                if not column.lower() == 'id':
+                    button = ctk.CTkButton(
+                        self.column_button_frame_1,
+                        text=column,
+                        width=100,
+                        command=lambda col=column: self.update_axis(col, 'x')  # Ensure correct column reference is passed
+                    )
+                    button.pack(side="left", padx=10)
         else:
             label = ctk.CTkLabel(self.column_button_frame_2, text="Select Y Axis", font=("Arial", 12, "bold"))
             label.pack(side="left", padx=10)
 
             # Create buttons for each column based on the filtered columns list
             for column in columns:
-                button = ctk.CTkButton(
-                    self.column_button_frame_2,
-                    text=column,
-                    width=100,
-                    command=lambda col=column: self.update_axis(col, 'y')  # Ensure correct column reference is passed
-                )
-                button.pack(side="left", padx=10)
+                if not column.lower() == 'id':
+                    button = ctk.CTkButton(
+                        self.column_button_frame_2,
+                        text=column,
+                        width=100,
+                        command=lambda col=column: self.update_axis(col, 'y')  # Ensure correct column reference is passed
+                    )
+                    button.pack(side="left", padx=10)
 
     def update_axis(self, column, axis):
         """Update the selected column for the chart."""
@@ -164,7 +154,9 @@ class BaseChart(ctk.CTkFrame):
         
 
         if self.just_num or self.just_cat:
-            data = self.preprocess.return_original_data()
+            data = self.sharedState.get_original_data().copy()
+            if 'id' in [col.lower() for col in data.columns]:
+                data.drop(columns=[col for col in data.columns if col.lower() == 'id'], inplace=True)
             if self.just_num:
                 data = data.select_dtypes(include=['number']) # Filter numerical columns
             elif self.just_cat:
@@ -184,6 +176,8 @@ class BaseChart(ctk.CTkFrame):
                     
         else:
             data = self.data
+            if 'id' in [col.lower() for col in data.columns]:
+                data.drop(columns=[col for col in data.columns if col.lower() == 'id'], inplace=True)
             if not self.selected_x_column :
                 self.selected_x_column = data.columns[0]
             if not self.selected_y_column :
