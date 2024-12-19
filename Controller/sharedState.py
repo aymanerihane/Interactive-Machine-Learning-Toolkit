@@ -52,11 +52,12 @@ class SharedState():
 
     # Setters
 
-    def set_preprocessing_finish(self):
-        self.preprocessing_finish = True
+    def set_preprocessing_finish(self,value):
+        self.preprocessing_finish = value
 
     def set_original_columns(self,value):
         self.original_columns = value
+        self.set_preprocessing_finish(False)
 
     def set_data_stats(self, nan, missing, classes, shape, balanced, cat, num):
         self.number_of_nan_values = nan
@@ -82,10 +83,12 @@ class SharedState():
         self.data = data
         self.set_columns(data.columns)
         if first:
+            print("First time")
+            print("Columns: ", data.columns)
             self.set_target_column(data.columns[-1])
     
     def set_original_data(self, data):
-        self.original_data = data
+        self.original_data = data.copy()
         # self.original_columns(data.columns)
 
     def set_file_uploaded(self, value):

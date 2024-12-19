@@ -199,6 +199,23 @@ class TrainingProcess():
 
         self.sharedState.set_prediction_finish(True)
 
+    # Evaluate the model with difirent methode 
+
+    def k_fold_cross_validation(self):
+        from sklearn.model_selection import cross_val_score
+        scores = cross_val_score(self.model, self.X, self.y, cv=10)
+        self.sharedState.set_testing_finish(True)
+        return scores.mean()
+    
+    
+    def classification_report(self):
+        from sklearn.metrics import classification_report
+        self.sharedState.set_testing_finish(True)
+
+        return classification_report(self.y_test, self.y_pred)
+
+
+
     def evaluate(self):
         from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
         self.accuracy = accuracy_score(self.y_test, self.y_pred)

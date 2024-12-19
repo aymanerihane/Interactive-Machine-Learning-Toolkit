@@ -8,22 +8,23 @@ from Controller.sharedState import SharedState
 
 class DataPreProcessor:
     
-    def __init__(self, file_path,sharedState = None):
+    def __init__(self, file_path = None ,sharedState = None, just_for_method_use = False):
         if sharedState is None:
             print("shared state is none")
             self.sharedState = SharedState()
 
         else:
             self.sharedState = sharedState
-        self.df = pd.read_csv(file_path)
-        try:
-
-
-            self.sharedState.set_file_uploaded(True)
-            self.set_data_info()
-            
-        except FileNotFoundError:
-            raise FileNotFoundError(f"CSV file not found at: {file_path}")
+        
+        if not just_for_method_use:
+            self.df = pd.read_csv(file_path)
+            self.sharedState.set_data(self.df,first = True)
+            try:
+                self.sharedState.set_file_uploaded(True)
+                self.set_data_info()
+                
+            except FileNotFoundError:
+                raise FileNotFoundError(f"CSV file not found at: {file_path}")
         
         # Initialize the preprocessing steps
         self.imputer = SimpleImputer(strategy="most_frequent")  # For missing categorical data
@@ -35,14 +36,12 @@ class DataPreProcessor:
 
 
 
-    def set_original_data(self):
-        self.sharedState.set_original_data(self.df)
-
-
-    def set_data(self):
+    def set_data(self,data):
+        self.df = data
+        self.set_data_info()
         self.sharedState.set_data(self.df)
 
-    def set_data_stats(self,refresh_data_stats):
+    def set_data_stats(self,refresh_data_stats,refreach = True):
         """
         Set the data statistics in the shared state.
         """
@@ -51,14 +50,15 @@ class DataPreProcessor:
         num_classes = len(self.df[self.sharedState.target_culumn].unique()) if self.sharedState.target_culumn is not None else 0
         data_shape = self.df.shape
         num_categorical_cols = self.df.select_dtypes(include=['object']).shape[1]
-        num_numerical_cols = self.df.select_dtypes(include=['float64', 'int64']).shape[1]
+        num_numerical_cols = self.df.select_dtypes(include=['float64', 'int64','int32']).shape[1]
         balanced = 'Yes' if num_classes > 1 and self.df[self.sharedState.target_culumn].value_counts(normalize=True).min() > 0.05 else 'No'
         
         self.sharedState.set_data_stats(nan_values, missing_values, num_classes, data_shape,balanced, num_categorical_cols, num_numerical_cols)
         print("Data stats set")
         print("Nan values: ", nan_values, "Missing values: ", missing_values, "Number of classes: ", num_classes, "Data shape: ", data_shape, "Number of categorical columns: ", num_categorical_cols, "Number of numerical columns: ", num_numerical_cols)
 
-        refresh_data_stats()
+        if refreach:
+            refresh_data_stats()
 
     def reduce_features(self, threshold=0.9):
         """
@@ -68,14 +68,15 @@ class DataPreProcessor:
         corr_matrix = self.df.corr().abs()
         
         # Select upper triangle of correlation matrix
-        upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(np.bool))
+        upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
         
         # Find index of feature columns with correlation greater than threshold
         to_drop = [column for column in upper.columns if any(upper[column] > threshold)]
         
         # Drop features
         self.df.drop(columns=to_drop, inplace=True)
-        
+        self.sharedState.set_preprocessing_finish(True)
+
         return self.df
 
 
@@ -95,6 +96,8 @@ class DataPreProcessor:
             self.df[column] = self.num_imputer.fit_transform(self.df[column].values.reshape(-1, 1))
         
         self.sharedState.set_data(self.df)
+        self.sharedState.set_preprocessing_finish(True)
+
         return self.df
 
     def scale_data(self):
@@ -106,6 +109,7 @@ class DataPreProcessor:
             self.df[num_cols] = self.scaler.fit_transform(self.df[num_cols])
         
         self.sharedState.set_data(self.df)
+        self.sharedState.set_preprocessing_finish(True)
 
         return self.df
 
@@ -137,6 +141,7 @@ class DataPreProcessor:
         
         self.sharedState.set_data(self.df)
 
+        self.sharedState.set_preprocessing_finish(True)
         return self.df
 
     def handle_dates(self):
@@ -157,6 +162,7 @@ class DataPreProcessor:
             except:
                 continue  # If not a valid date, skip
         self.sharedState.set_data(self.df)
+        self.sharedState.set_preprocessing_finish(True)
         return self.df
 
     def process_text(self, text_column):
@@ -168,6 +174,7 @@ class DataPreProcessor:
             tfidf_df = pd.DataFrame(tfidf_matrix.toarray(), columns=self.tfidf_vectorizer.get_feature_names_out())
             self.df = self.df.drop(text_column, axis=1).join(tfidf_df)
         self.sharedState.set_data(self.df)
+        self.sharedState.set_preprocessing_finish(True)
         return self.df
 
     def set_data_info(self):
@@ -302,21 +309,8 @@ class DataPreProcessor:
         self.df = self.df[cols]
         
         self.sharedState.set_data(self.df)
+        self.sharedState.set_preprocessing_finish(True)
         return self.df,self.unique_categorical_values
-
-    # def apply_categorical_preprocessing(self):
-    #     """
-    #     Apply encoding for categorical data.
-    #     """
-    #     cat_cols = self.df.select_dtypes(include=['object']).columns # Select categorical columns
-    #     for col in cat_cols:
-    #         if len(self.df[col].unique()) <= 10:  # Use one-hot encoding for low cardinality
-    #             onehot_encoded = self.onehot_encoder.fit_transform(self.df[[col]])
-    #             onehot_df = pd.DataFrame(onehot_encoded, columns=self.onehot_encoder.get_feature_names_out([col]))
-    #             self.df = pd.concat([self.df.drop(columns=[col]), onehot_df], axis=1)
-    #         else:  # Use label encoding for high cardinality
-    #             self.df[col] = self.label_encoder.fit_transform(self.df[col])
-    #     return self.df
 
     def apply_feature_augmentation(self):
         """
@@ -327,6 +321,8 @@ class DataPreProcessor:
         for col in poly_features:
             self.df[col + '_squared'] = self.df[col] ** 2
             self.df[col + '_cubed'] = self.df[col] ** 3
+        
+        self.sharedState.set_preprocessing_finish(True)
         return self.df
     
     def balance_classes(self):
@@ -338,6 +334,7 @@ class DataPreProcessor:
         smote = SMOTE(random_state=42)
         X_resampled, y_resampled = smote.fit_resample(self.df.drop(columns=[self.target_column]), self.df[self.target_column])
         self.df = pd.concat([X_resampled, y_resampled], axis=1)
+        self.sharedState.set_preprocessing_finish(True)
         return self.df
     
     def handle_outliers(self):
@@ -353,6 +350,7 @@ class DataPreProcessor:
             upper_bound = Q3 + 1.5 * IQR
             self.df[col] = np.where(self.df[col] < lower_bound, lower_bound, self.df[col])
             self.df[col] = np.where(self.df[col] > upper_bound, upper_bound, self.df[col])
+        self.sharedState.set_preprocessing_finish(True)
         return self.df
 
     def transform_skewed_features(self):
@@ -363,6 +361,7 @@ class DataPreProcessor:
         for col in num_cols:
             if self.df[col].skew() > 1:  # Check if skewness > 1 (highly skewed)
                 self.df[col] = np.log1p(self.df[col])  # Apply log(1+x) transformation
+        self.sharedState.set_preprocessing_finish(True)
         return self.df
     
     def standardize_data_types(self):
@@ -374,6 +373,7 @@ class DataPreProcessor:
                 self.df[col] = self.df[col].astype('string')  # Standardize text columns as 'string'
             elif self.df[col].dtype in ['float64', 'int64']:
                 self.df[col] = self.df[col].astype('float64')  # Standardize numerical columns as 'float64'
+        self.sharedState.set_preprocessing_finish(True)
         return self.df
 
     def get_numerical_columns(self):
@@ -389,9 +389,12 @@ class DataPreProcessor:
         target_col = self.sharedState.get_target_column()
         self.df[target_col] = self.df[target_col].apply(lambda x: 1 if x == self.df[target_col].mode()[0] else 0)
 
+        self.sharedState.set_preprocessing_finish(True)
         return self.df
     
 
     def reset(self):
         self.sharedState.set_data(self.sharedState.get_original_data())
-        self.df = self.sharedState.get_original_data()
+        self.df = self.sharedState.get_original_data().copy()
+        self.sharedState.set_preprocessing_finish(False)
+        print("## Data reset")

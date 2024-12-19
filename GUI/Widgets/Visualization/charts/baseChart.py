@@ -21,7 +21,7 @@ class BaseChart(ctk.CTkFrame):
         current_dir = os.path.dirname(os.path.abspath(__file__))
         root_dir = os.path.join(current_dir, "..", "..", "..", "..")
         self.csv_file = os.path.join(root_dir, "Data/csv_file.csv")
-        self.preprocess = PreD(self.csv_file,sharedState=self.sharedState)
+        self.preprocess = PreD(file_path = self.csv_file,sharedState=self.sharedState)
 
         # Layout Configuration
         self.grid_columnconfigure(0, weight=1)

@@ -114,22 +114,16 @@ class DataInfo(ctk.CTkFrame):
             current_dir = os.path.dirname(os.path.abspath(__file__))
             root_dir = os.path.join(current_dir,"..", "..","..")
             self.csv_file = os.path.join(root_dir, "data/csv_file.csv")
-            self.preprocess = PreD(self.csv_file,sharedState=self.sharedState)
+            
             
         except Exception as e:
             print(f"the file <{self.csv_file} > can't be loaded")
             raise e
             # return
         data = pd.read_csv(self.csv_file)
-        self.sharedState.set_original_data(data)
-        self.sharedState.set_original_columns(data.columns)
-        self.sharedState.set_data(data)
-        self.preprocess.set_data_stats(self.refresh_data_stats)
+        
         return data
 
-    def get_pre_process(self):
-        return self.preprocess
-            
 
     def update_Scrollable_frame(self):
         self.file_uploaded = True
@@ -217,23 +211,34 @@ class DataInfo(ctk.CTkFrame):
 
             # Define the full path where the file will be saved
             save_path = os.path.join(target_dir, new_filename)
+            
 
             # Copy the file to the target directory with a .csv extension
             shutil.copy(file, save_path)
 
             print(f"File saved as: {save_path}")
 
-            # Destroy any existing PreD instance
-            if hasattr(self, 'preprocess') and self.preprocess is not None:
-                print("Destroying previous PreD instance...")
-                self.preprocess = None  # Explicitly set to None
+            
 
-                
+            # Destroy any existing PreD instance
+
+            # Set the file path
+            self.preprocess = PreD(file_path = save_path,sharedState=self.sharedState)
+            data = pd.read_csv(save_path)
+            print(data)
+            self.sharedState.set_original_data(data)
+            self.sharedState.set_original_columns(data.columns)
+            self.sharedState.set_data(data,first=True)
+            self.preprocess.set_data_stats(self.refresh_data_stats)
+
+
             self.update_Scrollable_frame()
             if test:
                 self.sharedState.set_test_file_uploaded(True)
             else:
                 self.sharedState.set_file_uploaded(True)
+
+            
 
 
 
