@@ -139,13 +139,14 @@ class ChartHandler:
         plt.title(f"Violin Plot of {column}")
         return plt.gcf()
 
-    def plot_pair(self,target_column):
+    def plot_pair(self,sharedState):
         # Pair plot (scatter matrix) of the dataframe
         plt.figure(figsize=(10, 6))
-        if len(self.df.columns) > 5:
+        if len(self.df.columns) > 3:
             # take just the 5 first columns and make the hue the target column
-            sns.pairplot(self.df[self.df.columns[:5]],hue=target_column)
-            plt.title("Pair Plot for First 5 Columns")
+            df = self.df.iloc[:, :3]
+            sns.pairplot(df, hue="Species")
+            plt.title("Pair Plot for First 3 Columns")
         else:
             sns.pairplot(self.df)
             plt.title("Pair Plot")
@@ -166,11 +167,12 @@ class ChartHandler:
         plt.title(f"Line Plot of {x_column} vs {y_column}")
         return plt.gcf()
 
-    def plot_confusion_matrix(self, y_true, y_pred):
+    def plot_confusion_matrix(self, y_true, y_pred,labels):
         # Confusion Matrix
+        
         cm = confusion_matrix(y_true, y_pred)
         plt.figure(figsize=(10, 6))
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False, xticklabels=['Predicted Negative', 'Predicted Positive'], yticklabels=['True Negative', 'True Positive'])
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False, xticklabels=labels, yticklabels=labels)
         plt.title("Confusion Matrix")
         plt.ylabel('True Label')
         plt.xlabel('Predicted Label')
@@ -206,6 +208,8 @@ class ChartHandler:
         plt.figure(figsize=(10, 6))
         sns.countplot(x=self.df[column])
         plt.title(f"Bar Graph of {column}")
+        #rotate x-axis labels
+        plt.xticks(rotation=45)
         return plt.gcf()
 
     def plot_dendrogram(self):
@@ -214,11 +218,20 @@ class ChartHandler:
         plt.figure(figsize=(10, 7))
         dendrogram(linked, orientation='top', labels=self.df.index, distance_sort='descending')
         plt.title("Dendrogram")
+        plt.xticks(rotation=45) 
         return plt.gcf()
 
     def plot_cluster_scatter(self, x_column, y_column, labels):
+        """
+        Scatter plot for two numerical columns with cluster labels.
+        params:
+        x_column: The column for the x-axis.
+        y_column: The column for the y-axis.
+        labels: The cluster labels obtained from clustering algorithms like k-means.
+        """
         # Cluster scatter plot (after clustering algorithms like k-means)
         plt.figure(figsize=(10, 6))
         sns.scatterplot(x=self.df[x_column], y=self.df[y_column], hue=labels, palette='Set2')
         plt.title(f"Cluster Scatter Plot of {x_column} vs {y_column}")
+        plt.xticks(rotation=45)  
         return plt.gcf()

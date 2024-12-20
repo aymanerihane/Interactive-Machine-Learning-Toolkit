@@ -38,6 +38,8 @@ class TrainingProcess():
     def get_y_pred(self):
         return self.y_pred
 
+    def get_model_name(self):
+        return self.model_name
 
     def set_best_model(self,model_name):
         self.best_model = model_name
@@ -60,9 +62,14 @@ class TrainingProcess():
             self.X_train = self.X
             self.y_train = self.y
             process = PreD(sharedState=self.sharedState,file_path=self.sharedState.get_file_path())
-            test_data_proceced = process.apply_to_test(self.sharedState.get_test_data())
             self.X_test = self.sharedState.get_test_data().drop(self.sharedState.get_target_column(), axis=1)
+            id_columns = self.X_test.columns[self.X_test.columns.str.contains('id', case=False)]
+            if not id_columns.empty:
+                self.X_test = self.X_test.drop(id_columns[0], axis=1)
             self.y_test = self.sharedState.get_test_data()[self.sharedState.get_target_column()]
+            process.apply_to_test(self.sharedState.get_test_data())
+        
+        self.sharedState.set_y_test(self.y_test)
         
         return self.X_train, self.X_test, self.y_train, self.y_test
 
@@ -145,123 +152,18 @@ class TrainingProcess():
             best_model = "Random Forest"  # For large datasets, prefer Random Forest
         elif size == 'small' and best_model != "Decision Tree":
             best_model = "Decision Tree"  # For small datasets, prefer Decision Tree
+        
+        if task == 'clustering':
+            best_model = "clustering"
 
         self.set_best_model(best_model)
         return best_model  # Return the single best model
-
-
-    # def choose_best_model(self):
-    #     """
-    #     Chooses the best model based on dataset characteristics and task.
-
-    #     Parameters:
-    #         task (str): 'regression' or 'classification'.
-    #         data_type (str): 'continuous', 'categorical', or 'mixed'.
-    #         size (str): 'small' or 'large'.
-    #         features (str): 'low' or 'high'.
-    #         balance (str, optional): 'balanced' or 'imbalanced' (only for classification).
-        
-    #     Returns:
-    #         str: The best recommended model based on dataset characteristics.
-    #     """
-    #     try:
-    #         task, data_type, size, features, balance = self.sharedState.get_data_info()
-    #     except:
-    #         raise ValueError("Data not imported")
-
-    #     recommendations = []
-
-    #     # Classification task
-    #     if task == 'classification':
-    #         if data_type == 'continuous':
-    #             if size == 'small':
-    #                 recommendations.append("SVM")
-    #             else:
-    #                 recommendations.append("Random Forest")
-
-    #         elif data_type == 'categorical':
-    #             recommendations.append("Naive Bayes")
-    #             if size == 'large':
-    #                 recommendations.append("XGBoost")
-
-    #         elif data_type == 'mixed':
-    #             recommendations.append("Random Forest")
-    #             recommendations.append("Gradient Boosting")
-
-    #         # Handle class imbalance
-    #         if balance == 'imbalanced':
-    #             recommendations.append("Random Forest")
-    #             recommendations.append("XGBoost")
-    #         elif balance == 'balanced':
-    #             recommendations.append("Logistic Regression")
-
-    #         # High-dimensional feature space
-    #         if features == 'high':
-    #             recommendations.append("SVM")
-    #         elif features == 'low':
-    #             recommendations.append("Logistic Regression")
-    #             recommendations.append("Naive Bayes")
-
-    #     # Regression task
-    #     elif task == 'regression':
-    #         if data_type == 'continuous':
-    #             if size == 'small':
-    #                 recommendations.append("Linear Regression")
-    #             else:
-    #                 recommendations.append("Random Forest")
-    #                 recommendations.append("Gradient Boosting")
-
-    #         elif data_type == 'categorical':
-    #             recommendations.append("Decision Tree")
-    #             recommendations.append("Random Forest")
-
-    #         elif data_type == 'mixed':
-    #             recommendations.append("Gradient Boosting")
-    #             recommendations.append("Random Forest")
-
-    #         # High-dimensional feature space
-    #         if features == 'high':
-    #             recommendations.append("LightGBM")
-    #         elif features == 'low':
-    #             recommendations.append("Linear Regression")
-    #             recommendations.append("Decision Tree")
-
-    #     # General recommendations based on size
-    #     if size == 'large':
-    #         recommendations.append("Random Forest")
-    #         recommendations.append("Gradient Boosting")
-    #     elif size == 'small':
-    #         recommendations.append("Decision Tree")
-    #         recommendations.append("Linear Regression")
-    #         recommendations.append("Naive Bayes")
-
-    #     # Return the first model in the recommendations list (best one)
-    #     return recommendations[0] if recommendations else None  # Return the first recommended model
-
-    # Example usage
-    # classification_models = choose_best_model(
-    #     task='classification',
-    #     data_type='mixed',
-    #     size='large',
-    #     features='high',
-    #     balance='imbalanced'
-    # )
-
-    # regression_models = choose_best_model(
-    #     task='regression',
-    #     data_type='continuous',
-    #     size='small',
-    #     features='low'
-    # )
-
-    # print("Classification Models:", classification_models)
-    # print("Regression Models:", regression_models)
-
 
         
 
     def train_model(self,model_name):
         self.model_name = model_name
+        self.sharedState.set_model_name(model_name)
         self.split_data()
         probleme = 0
         try :
@@ -293,6 +195,8 @@ class TrainingProcess():
                 case 'clustering':
                     from sklearn.cluster import KMeans
                     self.model = KMeans(n_clusters=3)
+                    # get labels
+                    self.sharedState.set_labels(self.model.fit_predict(self.X))
                 case 'Linear Regression':
                     from sklearn.linear_model import LinearRegression
                     self.model = LinearRegression()
@@ -321,7 +225,8 @@ class TrainingProcess():
     def predict(self):
         # Remove id column from X_test if it exists
         self.y_pred = self.model.predict(self.X_test)
-
+        
+        self.sharedState.set_y_pred(self.y_pred)
         self.sharedState.set_prediction_finish(True)
 
     # Evaluate the model with difirent methode 

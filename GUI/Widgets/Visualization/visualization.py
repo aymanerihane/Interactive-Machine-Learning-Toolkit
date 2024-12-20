@@ -65,8 +65,10 @@ class VisualizationPage(ctk.CTkFrame):
             self.active_tab = current_tab
             if current_tab == "Pre-Training":
                 self.bind_mousewheel(self.pre_training_canvas)
+                self.populate_tab(self.pre_training_tab, self.charts_type["pre-training"],"pre-training")
             elif current_tab == "Post-Training":
                 self.bind_mousewheel(self.post_training_canvas)
+                self.populate_tab(self.post_training_tab, self.charts_type["post-training"],"post-training")
 
         # Repeat this function every 200ms (improved performance)
         self.after(200, self.poll_active_tab)
@@ -86,12 +88,17 @@ class VisualizationPage(ctk.CTkFrame):
 
     def populate_tab(self, tab, chart_dict, dict_parent, lisModel_available=None):
         """Populate a tab with chart sections and charts dynamically."""
+
+        #remove all widgets in the tab
+        for widget in tab.winfo_children():
+            widget.destroy()
+
         # Setting default value for lisModel_available if not provided
         if lisModel_available is None:
             lisModel_available = []
 
         # Pre-training data is always available
-        for i in range(3):  # Assuming 3 columns
+        for i in range(3):  
             tab.grid_columnconfigure(i, weight=1)  # Distribute space equally
 
         # make a return button
@@ -140,10 +147,11 @@ class VisualizationPage(ctk.CTkFrame):
                 desc.pack(pady=5)
 
                 # Logic for availability checks
+
                 if not dict_parent == "post-training":
                     if not self.training_done:
                         self.post_training_tab.grid_forget()  # Hide the tab
-                        not_available_label = ctk.CTkLabel(frame, text="Available" if self.sharedState.get_training_finish() else "Not Available", font=("Arial", 10, "italic"), fg_color="green",corner_radius=15)
+                        not_available_label = ctk.CTkLabel(frame, text="Available" , font=("Arial", 10, "italic"), fg_color="green",corner_radius=15)
                         not_available_label.pack(pady=5)
                     else:
                         self.post_training_tab.grid(row=row, column=0, columnspan=3, sticky="nsew")  # Show the tab again
@@ -151,7 +159,7 @@ class VisualizationPage(ctk.CTkFrame):
 
                 else:
                     # For pre-training, all charts are available
-                    self._add_chart_interaction(frame, chart_name, available_models, lisModel_available)
+                    self._add_chart_interaction(frame, chart_name, available_models)
 
                 col += 1
                 if col == 3:  # Adjust number of columns per row
@@ -160,27 +168,36 @@ class VisualizationPage(ctk.CTkFrame):
 
             # Add spacing after each section
             row += 1
+        
+        #update visualisation charrs status
+        
 
     
-    def _add_chart_interaction(self, frame, chart_name, available_models, lisModel_available):
+    def _add_chart_interaction(self, frame, chart_name, lisModel_available):
         """Handles chart interaction logic based on available models."""
-        if not available_models:
+        model_name = self.sharedState.get_model_name()
+        print(lisModel_available)
+        if model_name is None:
             # Display a "Not Available" message if no models match
-            not_available_label = ctk.CTkLabel(frame, text="Not Available", font=("Arial", 10, "italic"), fg_color="gray")
+            not_available_label = ctk.CTkLabel(frame, corner_radius=15, text="Not Available", font=("Arial", 10, "italic"), fg_color="gray")
             not_available_label.pack(pady=5)
 
-            # Make the frame unclickable
-            # frame.bind("<Button-1>", lambda event: None)  # Do nothing when clicked
         else:
-            # Check if model is available in lisModel_available
-            if any(model in lisModel_available for model in available_models):
-                # Bind the frame to call the switch_page method with a unique page name
+            _, _, _, _, task = self.sharedState.get_data_info()
+            
+            # Check if the model is available in lisModel_available
+            if any(task == modele.lower() for modele in lisModel_available):
+                # Display "Available" label
+                available_label = ctk.CTkLabel(frame, corner_radius=15, text="Available", font=("Arial", 10, "italic"), fg_color="green")
+                available_label.pack(pady=5)
+                # Enable click interaction for available models
+
                 frame.bind("<Button-1>", lambda event, chart_name=chart_name: self.switch_page(chart_name))
             else:
-                # If the model is not available, disable click interaction
-                not_available_label = ctk.CTkLabel(frame, corner_radius=15,text="Model Not Available", font=("Arial", 10, "italic"), fg_color="red")
+                # Display "Model Not Available" label
+                not_available_label = ctk.CTkLabel(frame, corner_radius=15, text="Model Not Available", font=("Arial", 10, "italic"), fg_color="red")
                 not_available_label.pack(pady=5)
-                # frame.bind("<Button-1>", lambda event: None)  # Do nothing when clicked
+
 
     def load_charts_data(self):
         """Load charts data from the JSON file."""

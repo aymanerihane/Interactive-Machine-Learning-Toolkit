@@ -131,3 +131,34 @@ class Table(ctk.CTkFrame):
 
     def return_to_previous_page(self):
         self.switch_page("visualization")
+
+
+    def toggle_column(self, col):
+        """Toggle visibility of a column based on checkbox state"""
+        if self.column_checkboxes[col].get():  # If checked, show the column
+            self.treeview["columns"] = list(self.treeview["columns"]) + [col]
+        else:  # If unchecked, hide the column
+            self.treeview["columns"] = [c for c in self.treeview["columns"] if c != col]
+
+        # Update column headings
+        self.update_table_columns()
+
+    def update_table_columns(self):
+        """Update table columns and populate rows"""
+        current_columns = list(self.treeview["columns"])
+
+        # Clear existing columns and rows
+        self.treeview.delete(*self.treeview.get_children())
+        for col in self.treeview["columns"]:
+            self.treeview.heading(col, text="")
+
+        # Set columns and headings
+        self.treeview["columns"] = current_columns
+        for col in current_columns:
+            self.treeview.heading(col, text=col)
+            self.treeview.column(col, width=100, anchor="center")  # Adjust column width
+
+        # Insert data into the table
+        for _, row in self.data.iterrows():
+            self.treeview.insert("", "end", values=[row[col] for col in current_columns])
+        

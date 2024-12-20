@@ -56,9 +56,13 @@ class DataPreProcessor:
         num_numerical_cols = self.df.select_dtypes(include=['float64', 'int64','int32']).shape[1]
         balanced = 'Yes' if num_classes > 1 and self.df[self.sharedState.target_culumn].value_counts(normalize=True).min() > 0.05 else 'No'
         
-        self.sharedState.set_data_stats(nan_values, missing_values, num_classes, data_shape,balanced, num_categorical_cols, num_numerical_cols)
+
+        #find duplicate columns number
+        duplicate_columns = self.df.columns.duplicated().sum()
         print("Data stats set")
-        print("Nan values: ", nan_values, "Missing values: ", missing_values, "Number of classes: ", num_classes, "Data shape: ", data_shape, "Number of categorical columns: ", num_categorical_cols, "Number of numerical columns: ", num_numerical_cols)
+        print("Nan values: ", nan_values, "Missing values: ", missing_values, "Number of classes: ", num_classes, "Data shape: ", data_shape, "Number of categorical columns: ", num_categorical_cols, "Number of numerical columns: ", num_numerical_cols, duplicate_columns)
+
+        self.sharedState.set_data_stats(nan_values, missing_values, num_classes, data_shape,balanced, num_categorical_cols, num_numerical_cols,duplicate_columns)
 
         if refreach:
             refresh_data_stats()
@@ -157,35 +161,40 @@ class DataPreProcessor:
         return df
     
     def apply_to_test(self, test_df):
-        test_df_copy = test_df.copy()
+        id_column = 'id' if 'id' in test_df.columns else 'ID' if 'ID' in test_df.columns else None
+        test_df_copy = test_df.copy().drop(columns=[id_column]) if id_column is not None else test_df.copy()
+        test_df = test_df.drop(columns=[id_column]) if id_column is not None else test_df
+        self.sharedState.set_test_data(test_df)
+
+        print("process_done: ", self.sharedState.get_process_done())
         for process in self.sharedState.get_process_done():
             match process:
                 case "Clean Data":
-                    self.clean_data(data=test_df)
+                    test_df = self.clean_data(data=test_df)
                 case "Scale Data":
-                    self.scale_data(data=test_df)
+                    test_df = self.scale_data(data=test_df)
                 case "Label Encode":
-                    self.label_encode(data=test_df)
+                    test_df = self.label_encode(data=test_df)
                 case "Handle Dates":
-                    self.handle_dates(data=test_df)
+                    test_df = self.handle_dates(data=test_df)
                 case "Reduce Features":
-                    self.reduce_features(data=test_df)
+                    test_df = self.reduce_features(data=test_df)
                 case "Balance Classes":
-                    self.balance_classes(data=test_df)
+                    test_df = self.balance_classes(data=test_df)
                 case "Handle Outliers":
-                    self.handle_outliers(data=test_df)
+                    test_df = self.handle_outliers(data=test_df)
                 case "Transform Skewed Features":
-                    self.transform_skewed_features(data=test_df)
+                    test_df = self.transform_skewed_features(data=test_df)
                 case "Standardize Data Types":
-                    self.standardize_data_types(data=test_df)
+                    test_df = self.standardize_data_types(data=test_df)
                 case "Binarize Target":
-                    self.binarize_target(data=test_df)
+                    test_df = self.binarize_target(data=test_df)
                 case "Apply Feature Augmentation":
-                    self.apply_feature_augmentation(data=test_df)
+                    test_df = self.apply_feature_augmentation(data=test_df)
+                case "Remove Duplicates":
+                    test_df.drop_duplicates(inplace=True)
                 case "Reset":
                     test_df = test_df_copy
-                case "Auto Pre-Processing":
-                    self.auto_preprocessing(data=test_df)
                 case _:
                     print(process)
 
@@ -282,10 +291,12 @@ class DataPreProcessor:
         else:
             balance = None
 
+        
+
 
         self.sharedState.set_data_info(task, type, size, features, balance)
         print("Data info set")
-        print("Task: ", task, "Type: ", type, "Size: ", size, "Features: ", features, "Balance: ", balance)
+        print("Task: ", task, "Type: ", type, "Size: ", size, "Features: ", features, "Balance: ", balance,)
 
     # auto preprocess methods
     def auto_preprocessing(self,data = None):
@@ -312,31 +323,39 @@ class DataPreProcessor:
         if data_type == 'categorical':
             applied_steps.append("Applying label encoding for categorical data")
             self.df = self.label_encode(data)
+            self.sharedState.add_process("Label Encode")
         elif data_type == 'continuous':
             applied_steps.append("Scaling numerical data")
             self.scale_data(data)
+            self.sharedState.add_process("Scale Data")
         elif data_type == 'mixed':
             applied_steps.append("Scaling numerical data and encoding categorical data")
             self.scale_data(data)
             self.df = self.label_encode(data)
+            self.sharedState.add_process("Scale Data")
+            self.sharedState.add_process("Label Encode")
 
         # Step 3: Feature count considerations
         if features == 'high':
             applied_steps.append("Applying feature selection or dimensionality reduction")
             self.reduce_features(threshold=0.85)
+            self.sharedState.add_process("Reduce Features")
         elif features == 'low':
             applied_steps.append("Applying feature augmentation")
             self.df = self.apply_feature_augmentation(data)
+            self.sharedState.add_process("Apply Feature Augmentation")
 
         # Step 4: Handle imbalanced data (only for classification)
         if task == 'classification' and balance == 'imbalanced':
             applied_steps.append("Balancing classes (e.g., using SMOTE or class weighting)")
             self.df = self.balance_classes(data)
+            self.sharedState.add_process("Balance Classes")
 
         # Step 5: Handle outliers (only for continuous features)
         if data_type in ['continuous', 'mixed']:
             applied_steps.append("Handling outliers IQR)")
             self.df = self.handle_outliers(data)
+            self.sharedState.add_process("Handle Outliers")
 
         # Step 6: Task-specific preprocessing
         if task == 'classification':
@@ -345,15 +364,19 @@ class DataPreProcessor:
             if len(self.df[target].unique()) == 2:
                 print('intred')
                 self.df = self.binarize_target(data)
+                self.sharedState.add_process("Binarize Target")
         elif task == 'regression':
             applied_steps.append("Applying log transformation for skewed continuous features")
             self.df = self.transform_skewed_features(data)
+            self.sharedState.add_process("Transform Skewed Features")
 
         # Step 7: General preprocessing
         applied_steps.append("Removing duplicate rows")
         self.df.drop_duplicates(inplace=True)
+        self.sharedState.add_process("Remove Duplicates")
         applied_steps.append("Checking and standardizing data types")
         self.standardize_data_types(data)
+        self.sharedState.add_process("Standardize Data Types")
 
         print("Applied preprocessing steps:")
         for step in applied_steps:
@@ -470,10 +493,10 @@ class DataPreProcessor:
         self.sharedState.set_preprocessing_finish(True)
         return df
     
-
     def reset(self):
         self.sharedState.set_data(self.sharedState.get_original_data())
         self.df = self.sharedState.get_original_data().copy()
         self.sharedState.set_preprocessing_finish(False)
         self.sharedState.set_new_process()
+        self.add_process_done("Reset")
         print("## Data reset")

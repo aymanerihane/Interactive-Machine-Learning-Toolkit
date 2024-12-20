@@ -32,7 +32,7 @@ class DataStats(ctk.CTkFrame):
         #######################################################
 
         # Default stats values
-        nbr_nan, nbr_missing, nbr_classes, data_shape, data_balanced, nbr_cat, nbr_num = 0, 0, 0, "(0,0)", "None", 0, 0
+        nbr_nan, nbr_missing, nbr_classes, data_shape, data_balanced, nbr_cat, nbr_num,duplicated = 0, 0, 0, "(0,0)", "None", 0, 0,0
 
         # Data stats frame
         self.dataStatsFrame = ctk.CTkFrame(self.infoFrame, fg_color="transparent")
@@ -72,17 +72,23 @@ class DataStats(ctk.CTkFrame):
         self.dataBalanced = ctk.CTkLabel(self.dataStatsFrame, text=data_balanced, font=self.FONT_LABEL)
         self.dataBalanced.grid(row=5, column=1, padx=10, pady=2, sticky="w")
 
+        # Number of duplicate columns
+        self.duplicateColumnsLabel = ctk.CTkLabel(self.dataStatsFrame, text="Number of duplicate columns:", font=self.FONT_LABEL)
+        self.duplicateColumnsLabel.grid(row=6, column=0, padx=10, pady=2, sticky="w")
+        self.duplicateColumns = ctk.CTkLabel(self.dataStatsFrame, text=duplicated, font=self.FONT_LABEL)
+        self.duplicateColumns.grid(row=6, column=1, padx=10, pady=2, sticky="w")
+
         # Number of categorical columns
         self.categoricalColumnsLabel = ctk.CTkLabel(self.dataStatsFrame, text="Number of categorical columns:", font=self.FONT_LABEL)
-        self.categoricalColumnsLabel.grid(row=6, column=0, padx=10, pady=2, sticky="w")
+        self.categoricalColumnsLabel.grid(row=7, column=0, padx=10, pady=2, sticky="w")
         self.categoricalColumns = ctk.CTkLabel(self.dataStatsFrame, text=nbr_cat, font=self.FONT_LABEL)
-        self.categoricalColumns.grid(row=6, column=1, padx=10, pady=2, sticky="w")
+        self.categoricalColumns.grid(row=7, column=1, padx=10, pady=2, sticky="w")
 
         # Number of numerical columns
         self.numericalColumnsLabel = ctk.CTkLabel(self.dataStatsFrame, text="Number of numerical columns:", font=self.FONT_LABEL)
-        self.numericalColumnsLabel.grid(row=7, column=0, padx=10, pady=2, sticky="w")
+        self.numericalColumnsLabel.grid(row=8, column=0, padx=10, pady=2, sticky="w")
         self.numericalColumns = ctk.CTkLabel(self.dataStatsFrame, text=nbr_num, font=self.FONT_LABEL)
-        self.numericalColumns.grid(row=7, column=1, padx=10, pady=2, sticky="w")
+        self.numericalColumns.grid(row=8, column=1, padx=10, pady=2, sticky="w")
 
         #######################################################
         #       Second Column in Data Detail (Preprocessing)
@@ -132,8 +138,8 @@ class DataStats(ctk.CTkFrame):
             "Standardize Data Types",  # Always enabled
             "Binarize Target",
             "Apply Feature Augmentation",
-            "Reset",
             "Auto Pre-Processing",  # Always enabled
+            "Reset",
         ]
 
         # Enable/disable conditions for each step
@@ -150,8 +156,8 @@ class DataStats(ctk.CTkFrame):
             "Standardize Data Types": True,  # Always enabled
             "Binarize Target": task == "classification" and len(self.sharedState.get_data()[self.sharedState.get_target_column()].unique()) == 2,
             "Apply Feature Augmentation": features == "low",
-            "Reset": True,  # Always enabled
             "Auto Pre-Processing": True,  # Always enabled
+            "Reset": True,  # Always enabled
         }
 
         # Store references to buttons for enabling/disabling
@@ -254,7 +260,7 @@ class DataStats(ctk.CTkFrame):
 
 
     def update_stats(self,first=False):
-        number_of_nan_values, number_of_missing_values, number_of_classes,data_shape,data_balanced,number_of_categorical_columns,number_of_numerical_columns=self.sharedState.get_data_stats()
+        number_of_nan_values, number_of_missing_values, number_of_classes,data_shape,data_balanced,number_of_categorical_columns,number_of_numerical_columns,duplicated=self.sharedState.get_data_stats()
 
         # Update the labels with the new stats values
         self.nanValues.configure(text=number_of_nan_values)
@@ -262,6 +268,7 @@ class DataStats(ctk.CTkFrame):
         self.classes.configure(text=number_of_classes)
         self.dataShape.configure(text=data_shape)
         self.dataBalanced.configure(text=data_balanced)
+        self.duplicateColumns.configure(text=duplicated)
         self.categoricalColumns.configure(text=number_of_categorical_columns)
         self.numericalColumns.configure(text=number_of_numerical_columns)
 

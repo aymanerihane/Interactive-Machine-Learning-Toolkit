@@ -1,16 +1,18 @@
 import customtkinter as ctk
-from PIL import Image
 import os
 from tkinter import messagebox
 from Controller.dataPreProcecing import DataPreProcessor as PreD
 from Controller.training_Process import TrainingProcess
 import threading
 import pandas as pd
+from sklearn.metrics import classification_report
 
 class FunctionalitySection(ctk.CTkFrame):
     def __init__(self, parent, sharedState):
         super().__init__(parent)
         self.sharedState = sharedState
+        self.switch_page = parent.switch_page
+
         self.preprocess = PreD(sharedState=self.sharedState,just_for_method_use=True)
         self.training = TrainingProcess(sharedState=self.sharedState)
 
@@ -32,6 +34,9 @@ class FunctionalitySection(ctk.CTkFrame):
         self.trainingFrame.grid_columnconfigure(0, weight=1)
         self.trainingFrame.grid_columnconfigure(1, weight=1)
         self.trainingFrame.grid_columnconfigure(2, weight=1)
+        self.trainingFrame.grid_rowconfigure(0, weight=1)
+        self.trainingFrame.grid_rowconfigure(1, weight=1)
+        
 
         #######################################################
         #       First Column in Data Detail (Data Stats)
@@ -77,12 +82,21 @@ class FunctionalitySection(ctk.CTkFrame):
         self.ClassificationReportContainer = ctk.CTkFrame(self.trainingFrame, fg_color="transparent")
         self.ClassificationReportContainer.grid(row=1, column=2, rowspan=2, sticky="nsew", padx=10, pady=10)
 
+        ############################################################
+        #       Second Row in Functionality (export and visiualize)
+        ############################################################
+
+        #scond row frame
+        self.SecondRowFrame = ctk.CTkFrame(self.trainingFrame, fg_color="transparent")
+        self.SecondRowFrame.grid(row=3, column=0, columnspan=3, sticky="nsew", padx=10, pady=10)
+
+        
+
     def create_classification_report_table(self):
         """
         Create a table for the classification report and display it inside the ClassificationReportFrame.
         """
-        import pandas as pd
-        from sklearn.metrics import classification_report
+        
 
         print("Creating classification report table...")
 
@@ -161,6 +175,10 @@ class FunctionalitySection(ctk.CTkFrame):
                         font=self.FONT_LABEL
                     )
                     data_label.grid(row=row_index, column=col_index + 1, padx=5, pady=5, sticky="ew")
+                
+            # Enable the export button
+            self.ExportButton.configure(state=ctk.NORMAL)
+            
 
 
         except Exception as e:
@@ -205,14 +223,18 @@ class FunctionalitySection(ctk.CTkFrame):
         # Button names and associated training conditions
         button_names = [
             "Random Forest",
+            "Decision Tree",
             "Logistic Regression",
-            "XGBoost",
+            "KNN",
             "SVM",
             "Naive Bayes",
-            "KNN",
-            "Decision Tree",
-            "Reset",
+            "XGBoost",
+            "lightgbm",
+            "clustering",
+            "Linear Regression",
+            "SVR",
             "Auto Model Selection",
+            "Reset",
         ]
 
         # Enable/disable conditions for each step
@@ -223,22 +245,21 @@ class FunctionalitySection(ctk.CTkFrame):
         enable_conditions = {
             "Random Forest": task == "classification" ,
             "Decision Tree": task == "classification" ,
-            "Logistic Regression": task == "classification" and "scaled data" in preprocess_done,
-            "KNN": task == "classification" and "scaled data" in preprocess_done,
-            "SVM": task == "classification" and "scaled data" in preprocess_done,
-            "Naive Bayes": task == "classification" and preprocess_done,
+            "Logistic Regression": task == "classification",
+            "KNN": task == "classification" ,
+            "SVM": task == "classification" ,
+            "Naive Bayes": task == "classification",
             "XGBoost": task == "classification" ,
             "lightgbm": task == "classification" ,
             "clustering": task == "clustering" ,
-            "Linear Regression": task == "regression" and "scaled data" in preprocess_done,
-            "SVR": task == "regression" and "scaled data" in preprocess_done,
-            "Reset": True,
+            "Linear Regression": task == "regression",
+            "SVR": task == "regression",
             "Auto Model Selection": True,
+            "Reset": True,
         }
 
         # Store references to buttons for enabling/disabling
         self.buttons = {}
-
 
         def on_button_click(name):
             """Handle button click and manage the progress bar."""
@@ -247,41 +268,36 @@ class FunctionalitySection(ctk.CTkFrame):
                 try:
                     # Start the progress bar
                     self.progressBar.start()
-                    
+
                     # Perform the training action
                     probleme = self.training.train_model(name)
                     self.training.predict()
-                    
+
                     # Stop the progress bar after training
                     self.progressBar.stop()
                     self.create_classification_report_table()
-                    
-                    
 
                 except Exception as e:
                     # Stop the progress bar in case of an error
                     self.progressBar.stop()
                     messagebox.showerror("Error", f"An error occurred during training: {str(e)}")
-                
-                #re-anable the button if the training in not successful
-                if probleme:
-                    self.buttons[name].configure(state=ctk.NORMAL)
-                    
-                
-            
+                    # Re-enable the button if training is not successful
+                    if probleme:
+                        self.buttons[name].configure(state=ctk.NORMAL)
+
             if name == "Reset":
-                # Re-enable all buttons after reset
+                # Reset all buttons to their initial enabled/disabled state
                 for btn_name, btn in self.buttons.items():
                     btn.configure(state=ctk.NORMAL if enable_conditions.get(btn_name, False) else ctk.DISABLED)
             else:
-                # Disable the clicked button
+                # Permanently disable the clicked button
                 self.buttons[name].configure(state=ctk.DISABLED)
-                
+
                 # Start a new thread for model training
                 training_thread = threading.Thread(target=train_model)
                 training_thread.start()
 
-
+        
         # Create buttons dynamically
         j = 0
         for i, name in enumerate(button_names):
@@ -307,6 +323,25 @@ class FunctionalitySection(ctk.CTkFrame):
         self.divider.grid(row=0, column=1, sticky="ns", padx=0, pady=30, rowspan=3)
 
 
+        #Visualization Button
+        ##title 
+        self.visualizeTitle = ctk.CTkLabel(self.SecondRowFrame, text="Visualization", font=self.FONT_TITLE, anchor="center")
+        self.visualizeTitle.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
+        
+        ##button
+        self.VisualizeButton = ctk.CTkButton(self.SecondRowFrame, text="Visualize Data", command=self.visualize_data)
+        self.VisualizeButton.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+
+        # Export Button
+        ##title
+        self.exportTitle = ctk.CTkLabel(self.SecondRowFrame, text="Export", font=self.FONT_TITLE, anchor="center")
+        self.exportTitle.grid(row=0, column=2, padx=5, pady=5, sticky="ew")
+
+        ##button
+        self.ExportButton = ctk.CTkButton(self.SecondRowFrame, text="Export Result", command=self.export_Result, state = ctk.DISABLED)
+        self.ExportButton.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
+
+
 
     def update_button(self):
         #remove all the widgets in the scrollable frame
@@ -323,111 +358,43 @@ class FunctionalitySection(ctk.CTkFrame):
         
         
      
-    # def __init__(self, parent, sharedState):
-    #     super().__init__(parent)
-    #     self.switch_page = parent.switch_page
-    #     self.sharedState = sharedState
-    #     image_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../images")
-    #     # Functionality Section
-    #     self.function_frame = ctk.CTkFrame(self, corner_radius=10)
-    #     self.function_frame.pack(pady=20, padx=20, fill="x")
+    def visualize_data(self):
+        print("Visualize Data clicked!")
+        if self.sharedState.get_file_uploaded():
+            self.switch_page("visualization")
+        else:
+            error_message = "Please upload a file first!"
+            #prompt
+            messagebox.showerror("Error", error_message)
+    
+    def export_Result(self):
+        """
+        Export the classification report to a CSV file.
+        """
+        try:
+            # Fetch the predictions and true labels
+            y_test = self.training.get_y_test()
+            y_pred = self.training.get_y_pred()
 
-    #     #devide function_frame into 3 columns
-    #     self.function_frame.grid_columnconfigure(1, weight=1)
-    #     self.function_frame.grid_columnconfigure(0, weight=1)
-    #     self.function_frame.grid_columnconfigure(2, weight=1)
+            # Validate that y_test and y_pred are not None
+            if y_test is None or y_pred is None:
+                raise ValueError("y_test or y_pred is not set. Ensure the model has been tested.")
 
-    #     # function_frame.pack(fill="both", expand=True)
+            # Generate the classification report as a dictionary
+            report_dict = classification_report(y_test, y_pred, output_dict=True)
 
-    #     # Button with image    
-    #     try:
+            # Convert the dictionary to a pandas DataFrame
+            report_df = pd.DataFrame(report_dict).transpose()
 
-    #         image = Image.open(os.path.join(image_path, "training_image.png"))
-    #         self.bg_image_tr = ctk.CTkImage(light_image=image, dark_image=image, size=(200, 200))
-    #         image = Image.open(os.path.join(image_path, "visualization.png"))
-    #         self.bg_image_visi = ctk.CTkImage(light_image=image, dark_image=image, size=(200, 200))
+            # Define the file path for the CSV file
+            file_path = os.path.join(os.getcwd(), "classification_report.csv")
 
-    #         # Button with image
-    #         # self.home_frame_button_1 = ctk.CTkButton(self.function_frame, image=self.bg_image)
-    #          # Button with image
-    #         self.buttonTraining = ctk.CTkButton(
-    #             self.function_frame,
-    #             text="",
-    #             image=self.bg_image_tr,
-    #             state="normal",
-    #             command=self.visualize_data,
-    #             height=200,  # Match the image height to the button height
-    #             fg_color="transparent",  # Match the parent background color
-    #         ).grid(row=0, column=0, padx=10, pady=0, sticky="ew")
-            
+            # Export the DataFrame to a CSV file
+            report_df.to_csv(file_path, index=True)
 
-    #         ctk.CTkButton(
-    #             self.function_frame,
-    #             text="",
-    #             font=ctk.CTkFont(size=16, weight="bold"),
-    #             height=200,
-    #             image=self.bg_image_visi,
-    #             # compound="center",
-    #             command=self.visualize_data,
-    #             fg_color="transparent",  # Match the parent background color
-    #         ).grid(row=0, column=1, padx=10, pady=0, sticky="ew")
+            # Show a success message
+            messagebox.showinfo("Export Successful", f"Classification report exported to {file_path}")
 
-    #         ctk.CTkButton(
-    #             self.function_frame,
-    #             text="",
-    #             font=ctk.CTkFont(size=16, weight="bold"),
-    #             height=200,
-    #             image=self.bg_image_visi,
-    #             fg_color="transparent",
-    #             command=self.export_result,
-    #         ).grid(row=0, column=2, padx=10, pady=0, sticky="ew")
-
-    #     except FileNotFoundError:
-    #         print(f"Error: The image file was not found.")
-    #         ctk.CTkButton(
-    #         self.function_frame,
-    #         text="Training Data",
-    #         font=ctk.CTkFont(size=16, weight="bold"),
-    #         height=200,
-    #         command=self.train_model).grid(row=0, column=0, padx=5, pady=10,sticky="ew")
-
-    #         ctk.CTkButton(
-    #             self.function_frame,
-    #             text="Visualize Data",
-    #             font=ctk.CTkFont(size=16, weight="bold"),
-    #             height=200,
-    #             command=self.visualize_data,
-    #         ).grid(row=0, column=1, padx=5, pady=10,sticky="ew")
-
-    #         ctk.CTkButton(
-    #             self.function_frame,
-    #             text="Export Result",
-    #             font=ctk.CTkFont(size=16, weight="bold"),
-    #             height=200,
-    #             command=self.export_result,
-    #             state="disabled",
-    #         ).grid(row=0, column=2, padx=5, pady=10, sticky="ew")
-
-
-
-    # def train_model(self):
-    #     print("Train Model clicked!")
-    #     if self.sharedState.get_file_uploaded():
-    #         self.switch_page("Training")
-    #     else:
-    #         error_message = "Please upload a file first!"
-    #         #prompt
-    #         messagebox.showerror("Error", error_message)
-
-    # def visualize_data(self):
-    #     print("Visualize Data clicked!")
-    #     if self.sharedState.get_file_uploaded():
-    #         self.switch_page("visualization")
-    #     else:
-    #         error_message = "Please upload a file first!"
-    #         #prompt
-    #         messagebox.showerror("Error", error_message)
-            
-
-    # def export_result(self):
-    #     print("Export Result clicked!")
+        except Exception as e:
+            # Display error message if an exception occurs
+            messagebox.showerror("Error", f"An error occurred while exporting the report: {str(e)}")

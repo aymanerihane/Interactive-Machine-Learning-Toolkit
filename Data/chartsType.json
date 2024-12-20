@@ -7,37 +7,33 @@
             },
             "Histograme": {
                 "description": "Shows the frequency distribution of numerical data.",
-                "models": ["Linear Regression", "Classification models"]
+                "models": ["Regression", "Classification"]
             },
             "Scatter Plot": {
                 "description": "Visualizes the relationship between two numerical variables.",
-                "models": ["Regression models", "Clustering models"]
+                "models": ["Regression", "Clustering"]
             },
             "Box Plot": {
                 "description": "Shows the distribution of numerical data using medians and quartiles.",
-                "models": ["Linear Regression", "Classification models"]
+                "models": ["Regression", "Classification"]
             },
             "Heat Map": {
                 "description": "Represents data in a matrix format with colors indicating values.",
-                "models": ["Clustering models", "Correlation analysis"]
+                "models": ["Clustering"]
             },
             "Pie Chart": {
                 "description": "Visualizes proportions of a whole as slices of a pie.",
-                "models": ["Classification models", "Cluster analysis"]
+                "models": ["Classification", "Clustering"]
             }
         },
         "General Insights": {
             "Violin Plots": {
                 "description": "Shows the distribution and density of numerical data.",
-                "models": ["Linear Regression", "Classification models"]
+                "models": ["Regression", "Classification"]
             },
             "Pair Plots": {
                 "description": "Shows relationships between multiple features in a dataset.",
-                "models": ["Clustering models", "Regression models"]
-            },
-            "Stacked Bar Charts": {
-                "description": "Compares categories and subcategories as stacked bars.",
-                "models": ["Classification models", "Multi-class classification"]
+                "models": ["Clustering", "Regression"]
             }
         }
     },
@@ -45,33 +41,33 @@
         "Model Performance Visualization (available after training)": {
             "Line Graphs": {
                 "description": "Shows the distribution of a single feature or trends over time.",
-                "models": ["Regression models", "Time-series forecasting"]
+                "models": ["Regression"]
             },
             "Confusion Matrix": {
                 "description": "Visualizes the performance of classification models.",
-                "models": ["Classification models"]
+                "models": ["Classification"]
             },
             "ROC Curves": {
                 "description": "Evaluates the true positive rate against the false positive rate for classifiers.",
-                "models": ["Classification models"]
+                "models": ["Classification"]
             },
             "Precision-Recall Curve": {
                 "description": "Visualizes the tradeoff between precision and recall for models.",
-                "models": ["Classification models"]
+                "models": ["Classification"]
             }
         },
         "Clustering and Feature Analysis (available after training)": {
             "Bar Graphs": {
                 "description": "Compares different categories or groups.",
-                "models": ["Clustering models", "Classification models"]
+                "models": ["Clustering", "Classification"]
             },
             "Dendrograms": {
                 "description": "Visualizes hierarchical clustering results.",
-                "models": ["Hierarchical Clustering"]
+                "models": ["Clustering"]
             },
             "Cluster Scatter Plots": {
                 "description": "Shows data points grouped into clusters.",
-                "models": ["Clustering models"]
+                "models": ["Clustering"]
             }
         }
     }

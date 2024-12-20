@@ -12,6 +12,7 @@ class SharedState():
         self.testing_finish = False
         self.preprocessing_finish = False
         self.prediction_finish = False
+        labels = None
 
         #data info
         self.data_type = None
@@ -19,6 +20,7 @@ class SharedState():
         self.size = None
         self.features = None
         self.task = None
+        self.duplicate_columns = None
         
 
         ##data stats
@@ -30,6 +32,7 @@ class SharedState():
         self.number_of_categorical_columns = None
         self.number_of_numerical_columns = None
         
+        
 
 
         # Data
@@ -39,6 +42,7 @@ class SharedState():
         self.original_columns = None
         self.test_data = None
         self.process_done=[]
+        self.model_name = None
 
         
 
@@ -54,6 +58,17 @@ class SharedState():
         
 
     # Setters
+    def set_y_test(self, y_test):
+        self.y_test = y_test
+
+    def set_y_pred(self, y_pred):
+        self.y_pred = y_pred
+        
+    def set_labels(self, labels):
+        self.labels = labels
+
+    def set_model_name(self, name):
+        self.model_name = name
 
     def set_file_path(self, path):
         self.file_path = path
@@ -74,7 +89,7 @@ class SharedState():
         self.original_columns = value
         self.set_preprocessing_finish(False)
 
-    def set_data_stats(self, nan, missing, classes, shape, balanced, cat, num):
+    def set_data_stats(self, nan, missing, classes, shape, balanced, cat, num,duplicate_columns):
         self.number_of_nan_values = nan
         self.number_of_missing_values = missing
         self.number_of_classes = classes
@@ -82,7 +97,7 @@ class SharedState():
         self.data_balanced = balanced
         self.number_of_categorical_columns = cat
         self.number_of_numerical_columns = num
-        self.index_of_target = None
+        self.duplicate_columns = duplicate_columns
 
     def set_columns(self, columns):
         self.columns = columns
@@ -139,7 +154,7 @@ class SharedState():
         return self.original_columns
 
     def get_data_stats(self):
-        return self.number_of_nan_values, self.number_of_missing_values, self.number_of_classes, self.data_shape, self.data_balanced, self.number_of_categorical_columns, self.number_of_numerical_columns
+        return self.number_of_nan_values, self.number_of_missing_values, self.number_of_classes, self.data_shape, self.data_balanced, self.number_of_categorical_columns, self.number_of_numerical_columns, self.duplicate_columns
     
 
     def get_columns(self):
@@ -194,3 +209,14 @@ class SharedState():
     
     def get_file_path(self):
         return self.file_path
+    
+    def get_model_name(self):
+        return self.model_name
+    
+    def get_labels(self):
+        return self.labels
+    
+    def get_y_test(self):
+        return self.y_test
+    def get_y_pred(self):
+        return self.y_pred

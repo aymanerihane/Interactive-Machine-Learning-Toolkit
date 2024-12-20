@@ -11,6 +11,13 @@ from Widgets.Visualization.charts.PreTraining.table import Table
 from Widgets.Visualization.charts.PreTraining.pairPlot import PairPlots
 from GUI.Widgets.Visualization.charts.PreTraining.violin_Plots import ViolinPlots
 from GUI.Widgets.Visualization.charts.PreTraining.stacked_Bar_Charts import StackedBarCharts
+from GUI.Widgets.Visualization.charts.PostTraining.dendrograms import Dendrograms
+from GUI.Widgets.Visualization.charts.PostTraining.bar_graphs import BarGraphs
+from GUI.Widgets.Visualization.charts.PostTraining.lineGraphs import LineGraphs
+from GUI.Widgets.Visualization.charts.PostTraining.cluster_scatter_plots import ClusterScatterPlots
+from GUI.Widgets.Visualization.charts.PostTraining.confusion_matrix import ConfusionMatrix
+from GUI.Widgets.Visualization.charts.PostTraining.rocCurve import ROCCurve
+from GUI.Widgets.Visualization.charts.PostTraining.precision_recall_curve import Precision_RecallCurve
 from Controller.sharedState import SharedState
 
 class MainApp(ctk.CTk):
@@ -64,6 +71,14 @@ class MainApp(ctk.CTk):
                 "pairplots": PairPlots,
                 "violinplots": ViolinPlots,
                 "stackedbarcharts": StackedBarCharts,
+                "dendrograms": Dendrograms,
+                "bargraphs": BarGraphs,
+                "linegraphs": LineGraphs,
+                "clusterscatterplots": ClusterScatterPlots,
+                "confusionmatrix": ConfusionMatrix,
+                "roccurve": ROCCurve,
+                "precision_recallcurve": Precision_RecallCurve
+                
             }
             if page_name in chart_classes:
                 self.pages[page_name] = chart_classes[page_name](self, switch_page=self.show_page, sharedState=self.sharedState)
@@ -72,7 +87,7 @@ class MainApp(ctk.CTk):
         page_name = page_name.replace(" ", "").lower()
         dynamic_pages = [
             "histograme", "scatterplot", "piechart", "boxplot", 
-            "heatmap", "table", "pairplots", "violinplots", "stackedbarcharts"
+            "heatmap", "table", "pairplots", "violinplots", "stackedbarcharts","dendrograms","bargraphs","linegraphs","clusterscatterplots","confusionmatrix","roccurve","precision_recallcurve"
         ]
         if page_name in dynamic_pages:
             self.initialize_page(page_name, reinitialize=True)
