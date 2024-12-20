@@ -3,6 +3,7 @@ class SharedState():
     def __init__(self):
         super().__init__()
         self.file_uploaded = False
+        self.file_path = None
         self.test_file_uploaded = False
         self.has_target = True 
         self.target_culumn = None  
@@ -36,6 +37,8 @@ class SharedState():
         self.original_data = None
         self.columns = None
         self.original_columns = None
+        self.test_data = None
+        self.process_done=[]
 
         
 
@@ -51,6 +54,18 @@ class SharedState():
         
 
     # Setters
+
+    def set_file_path(self, path):
+        self.file_path = path
+
+    def set_test_data(self, data):
+        self.test_data = data
+
+    def add_process(self, value):
+        self.process_done.append(value)
+
+    def set_new_process(self):
+        self.process_done = []
 
     def set_preprocessing_finish(self,value):
         self.preprocessing_finish = value
@@ -170,3 +185,12 @@ class SharedState():
 
     def get_target_column_index(self):
         return self.index_of_target
+    
+    def get_process_done(self):
+        return self.process_done
+    
+    def get_test_data(self):
+        return self.test_data
+    
+    def get_file_path(self):
+        return self.file_path

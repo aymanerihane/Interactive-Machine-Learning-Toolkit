@@ -38,7 +38,7 @@ class HomePage(ctk.CTkFrame):
         self.data_info.pack(pady=0, padx=0, fill="x", in_=self.scrollable_frame)
 
         # Details Section (Data Statistics)
-        self.data_stats = DataStats(self, self.sharedState)
+        self.data_stats = DataStats(self, self.sharedState,self.refresh_data_training_button)
         self.data_stats.pack(pady=0, padx=0, fill="x", in_=self.scrollable_frame)
 
         # Functionality Section
@@ -51,4 +51,11 @@ class HomePage(ctk.CTkFrame):
             self.data_stats.update_stats(first=True)
         else:
             print("Error: The DataStats widget does not have an 'update_stats' method.")
+    
+    def refresh_data_training_button(self):
+        """Refresh the DataStats widget."""
+        if hasattr(self.functionality, 'update_button'):
+            self.functionality.update_button()
+        else:
+            print("Error: The Fonctionality widget does not have an 'update_button' method.")
     

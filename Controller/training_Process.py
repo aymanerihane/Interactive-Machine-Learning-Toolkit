@@ -1,25 +1,17 @@
 
-from Controller.dataPreProcecing import DataPreProcessor
-from Controller.sharedState import SharedState
 from sklearn.model_selection import train_test_split
+from tkinter import messagebox
 from Controller.dataPreProcecing import DataPreProcessor as PreD
-import os
-
 
 class TrainingProcess():
-    def __init__(self,file_path,sharedState):
-        self.file_path = file_path
+    def __init__(self,sharedState):
         self.sharedState = sharedState
-
-        # initialize data preprocessor
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        root_dir = os.path.join(current_dir, "..")
-        self.csv_file = os.path.join(root_dir, "Data/csv_file.csv")
-        self.dataPreProcessor = DataPreProcessor(self.csv_file)
 
 
         self.model = None
         self.model_name = None
+        self.X = None
+        self.y = None
         self.X_train = None
         self.X_test = None
         self.y_train = None
@@ -32,27 +24,47 @@ class TrainingProcess():
         self.confusion_matrix = None
 
         
-        self.target_column = self.sharedState.target_column
+        self.target_column = self.sharedState.get_target_column()
         self.original_data = self.sharedState.get_original_data()
-        self.dataPreProcessor.auto_preprocessing()
-        self.X = self.dataPreProcessor.df.drop(columns=[self.target_column])
-        self.y = self.dataPreProcessor.df[self.target_column]
+        self.data = self.sharedState.get_data()
 
-        self.split_data()
 
+        self.best_model=None
+        self.model_and_train = {}
+
+    def get_y_test(self):
+        return self.y_test
+    
+    def get_y_pred(self):
+        return self.y_pred
+
+
+    def set_best_model(self,model_name):
+        self.best_model = model_name
 
     def split_data(self):
-        if self.X.shape[1] > 100:
-            self.dataPreProcessor.reduce_features()
+        self.data= self.sharedState.get_data()
+        self.X = self.data.drop(self.sharedState.get_target_column(), axis=1)
+        self.y = self.data[self.sharedState.get_target_column()]
+
+
+        #if id column exist drop it
+        id_columns = self.X.columns[self.X.columns.str.contains('id', case=False)]
+        if not id_columns.empty:
+            self.X = self.X.drop(id_columns[0], axis=1)
+
 
         if not self.sharedState.get_has_split():
             self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y, test_size=0.2, random_state=42)
         else:
             self.X_train = self.X
             self.y_train = self.y
-            self.X_test = self.dataPreProcessor.test_data.drop(columns=[self.target_column])
-            self.y_test = self.dataPreProcessor.test_data[self.target_column]
-
+            process = PreD(sharedState=self.sharedState,file_path=self.sharedState.get_file_path())
+            test_data_proceced = process.apply_to_test(self.sharedState.get_test_data())
+            self.X_test = self.sharedState.get_test_data().drop(self.sharedState.get_target_column(), axis=1)
+            self.y_test = self.sharedState.get_test_data()[self.sharedState.get_target_column()]
+        
+        return self.X_train, self.X_test, self.y_train, self.y_test
 
     def choose_best_model(self):
         """
@@ -66,69 +78,165 @@ class TrainingProcess():
             balance (str, optional): 'balanced' or 'imbalanced' (only for classification).
         
         Returns:
-            list: Recommended models with explanations.
+            str: The best recommended model based on dataset characteristics.
         """
-        try :
-            task, data_type, size, features, balance= self.sharedState.get_data_info()
+        try:
+            task, data_type, size, features, balance = self.sharedState.get_data_info()
         except:
-            raise "Data not imported"
-        recommendations = []
+            raise ValueError("Data not imported")
+
+        # Default best model initialization
+        best_model = None
 
         # Classification task
         if task == 'classification':
+            # Priority rules for classification
             if data_type == 'continuous':
                 if size == 'small':
-                    recommendations.append("SVM (works well with continuous, small datasets)")
+                    best_model = "SVM"  # Small dataset with continuous data, use SVM
                 else:
-                    recommendations.append("Random Forest (robust to continuous data)")
+                    best_model = "Random Forest"  # Large dataset with continuous data, use Random Forest
 
             elif data_type == 'categorical':
-                recommendations.append("Naive Bayes (handles categorical data well)")
+                best_model = "Naive Bayes"  # Categorical data, Naive Bayes
                 if size == 'large':
-                    recommendations.append("XGBoost (handles categorical and large datasets well)")
+                    best_model = "XGBoost"  # For large datasets with categorical data, prefer XGBoost
 
             elif data_type == 'mixed':
-                recommendations.append("Random Forest or Gradient Boosting (handles mixed data)")
+                best_model = "Random Forest"  # Mixed data type, prefer Random Forest
 
             # Handle class imbalance
-            if balance == 'imbalanced':
-                recommendations.append("Random Forest or XGBoost (good for imbalanced data)")
-            elif balance == 'balanced':
-                recommendations.append("Logistic Regression (effective for balanced data)")
+            if balance == 'imbalanced' and best_model != "XGBoost":
+                best_model = "Random Forest"  # For imbalanced classes, use Random Forest
+            elif balance == 'balanced' and best_model != "Logistic Regression":
+                best_model = "Logistic Regression"  # For balanced classes, prefer Logistic Regression
 
             # High-dimensional feature space
-            if features == 'high':
-                recommendations.append("SVM (performs well on high-dimensional data)")
-            elif features == 'low':
-                recommendations.append("Logistic Regression or Naive Bayes (simple for low-dimensional data)")
+            if features == 'high' and best_model != "SVM":
+                best_model = "SVM"  # For high-dimensional data, use SVM
+            elif features == 'low' and best_model != "Logistic Regression":
+                best_model = "Logistic Regression"  # For low-dimensional data, use Logistic Regression
 
         # Regression task
         elif task == 'regression':
+            # Priority rules for regression
             if data_type == 'continuous':
                 if size == 'small':
-                    recommendations.append("Linear Regression (best for small continuous data)")
+                    best_model = "Linear Regression"  # Small dataset with continuous data, use Linear Regression
                 else:
-                    recommendations.append("Random Forest or Gradient Boosting (effective for large datasets)")
+                    best_model = "Random Forest"  # Large dataset with continuous data, use Random Forest
 
             elif data_type == 'categorical':
-                recommendations.append("Tree-based methods (e.g., Decision Tree, Random Forest)")
+                best_model = "Decision Tree"  # Categorical data for regression, Decision Tree
+                if size == 'large':
+                    best_model = "Random Forest"  # For large datasets with categorical data, prefer Random Forest
 
             elif data_type == 'mixed':
-                recommendations.append("Gradient Boosting or Random Forest (handles mixed data well)")
+                best_model = "Gradient Boosting"  # Mixed data type for regression, prefer Gradient Boosting
 
             # High-dimensional feature space
-            if features == 'high':
-                recommendations.append("Neural Networks (best for high-dimensional regression tasks)")
-            elif features == 'low':
-                recommendations.append("Linear Regression or Decision Tree (simple for low-dimensional data)")
+            if features == 'high' and best_model != "LightGBM":
+                best_model = "LightGBM"  # For high-dimensional data, use LightGBM
+            elif features == 'low' and best_model != "Linear Regression":
+                best_model = "Linear Regression"  # For low-dimensional data, use Linear Regression
 
-        # General recommendations
-        if size == 'large':
-            recommendations.append("Consider Neural Networks for large datasets")
-        elif size == 'small':
-            recommendations.append("Simple models like Naive Bayes or Logistic Regression for small datasets")
+        # General model recommendations based on size
+        if size == 'large' and best_model != "Random Forest":
+            best_model = "Random Forest"  # For large datasets, prefer Random Forest
+        elif size == 'small' and best_model != "Decision Tree":
+            best_model = "Decision Tree"  # For small datasets, prefer Decision Tree
 
-        return list(set(recommendations))  # Return unique suggestions
+        self.set_best_model(best_model)
+        return best_model  # Return the single best model
+
+
+    # def choose_best_model(self):
+    #     """
+    #     Chooses the best model based on dataset characteristics and task.
+
+    #     Parameters:
+    #         task (str): 'regression' or 'classification'.
+    #         data_type (str): 'continuous', 'categorical', or 'mixed'.
+    #         size (str): 'small' or 'large'.
+    #         features (str): 'low' or 'high'.
+    #         balance (str, optional): 'balanced' or 'imbalanced' (only for classification).
+        
+    #     Returns:
+    #         str: The best recommended model based on dataset characteristics.
+    #     """
+    #     try:
+    #         task, data_type, size, features, balance = self.sharedState.get_data_info()
+    #     except:
+    #         raise ValueError("Data not imported")
+
+    #     recommendations = []
+
+    #     # Classification task
+    #     if task == 'classification':
+    #         if data_type == 'continuous':
+    #             if size == 'small':
+    #                 recommendations.append("SVM")
+    #             else:
+    #                 recommendations.append("Random Forest")
+
+    #         elif data_type == 'categorical':
+    #             recommendations.append("Naive Bayes")
+    #             if size == 'large':
+    #                 recommendations.append("XGBoost")
+
+    #         elif data_type == 'mixed':
+    #             recommendations.append("Random Forest")
+    #             recommendations.append("Gradient Boosting")
+
+    #         # Handle class imbalance
+    #         if balance == 'imbalanced':
+    #             recommendations.append("Random Forest")
+    #             recommendations.append("XGBoost")
+    #         elif balance == 'balanced':
+    #             recommendations.append("Logistic Regression")
+
+    #         # High-dimensional feature space
+    #         if features == 'high':
+    #             recommendations.append("SVM")
+    #         elif features == 'low':
+    #             recommendations.append("Logistic Regression")
+    #             recommendations.append("Naive Bayes")
+
+    #     # Regression task
+    #     elif task == 'regression':
+    #         if data_type == 'continuous':
+    #             if size == 'small':
+    #                 recommendations.append("Linear Regression")
+    #             else:
+    #                 recommendations.append("Random Forest")
+    #                 recommendations.append("Gradient Boosting")
+
+    #         elif data_type == 'categorical':
+    #             recommendations.append("Decision Tree")
+    #             recommendations.append("Random Forest")
+
+    #         elif data_type == 'mixed':
+    #             recommendations.append("Gradient Boosting")
+    #             recommendations.append("Random Forest")
+
+    #         # High-dimensional feature space
+    #         if features == 'high':
+    #             recommendations.append("LightGBM")
+    #         elif features == 'low':
+    #             recommendations.append("Linear Regression")
+    #             recommendations.append("Decision Tree")
+
+    #     # General recommendations based on size
+    #     if size == 'large':
+    #         recommendations.append("Random Forest")
+    #         recommendations.append("Gradient Boosting")
+    #     elif size == 'small':
+    #         recommendations.append("Decision Tree")
+    #         recommendations.append("Linear Regression")
+    #         recommendations.append("Naive Bayes")
+
+    #     # Return the first model in the recommendations list (best one)
+    #     return recommendations[0] if recommendations else None  # Return the first recommended model
 
     # Example usage
     # classification_models = choose_best_model(
@@ -154,47 +262,64 @@ class TrainingProcess():
 
     def train_model(self,model_name):
         self.model_name = model_name
-        match model_name:
-            case 'Random Forest':
-                from sklearn.ensemble import RandomForestClassifier
-                self.model = RandomForestClassifier()
-            case 'Decision Tree':
-                from sklearn.tree import DecisionTreeClassifier
-                self.model = DecisionTreeClassifier()
-            case 'Logistic Regression':
-                from sklearn.linear_model import LogisticRegression
-                self.model = LogisticRegression()
-            case 'KNN':
-                from sklearn.neighbors import KNeighborsClassifier
-                self.model = KNeighborsClassifier()
-            case 'SVM':
-                from sklearn.svm import SVC
-                self.model = SVC()
-            case 'Naive Bayes':
-                from sklearn.naive_bayes import GaussianNB
-                self.model = GaussianNB()
-            case 'XGBoost':
-                from xgboost import XGBClassifier
-                self.model = XGBClassifier()
-            case 'LightGBM':
-                from lightgbm import LGBMClassifier
-                self.model = LGBMClassifier()
-            case 'CatBoost':   
-                from catboost import CatBoostClassifier
-                self.model = CatBoostClassifier()
-            case 'clustering':
-                from sklearn.cluster import KMeans
-                self.model = KMeans(n_clusters=3)
-            case 'Linear Regression':
-                from sklearn.linear_model import LinearRegression
-                self.model = LinearRegression()
-            case _:
-                print('Invalid model name')
-        self.model.fit(self.X_train,self.y_train)
+        self.split_data()
+        probleme = 0
+        try :
+            match model_name:
+                case 'Random Forest':
+                    from sklearn.ensemble import RandomForestClassifier
+                    self.model = RandomForestClassifier()
+                case 'Decision Tree':
+                    from sklearn.tree import DecisionTreeClassifier
+                    self.model = DecisionTreeClassifier()
+                case 'Logistic Regression':
+                    from sklearn.linear_model import LogisticRegression
+                    self.model = LogisticRegression()
+                case 'KNN':
+                    from sklearn.neighbors import KNeighborsClassifier
+                    self.model = KNeighborsClassifier()
+                case 'SVM':
+                    from sklearn.svm import SVC
+                    self.model = SVC()
+                case 'Naive Bayes':
+                    from sklearn.naive_bayes import GaussianNB
+                    self.model = GaussianNB()
+                case 'XGBoost':
+                    from xgboost import XGBClassifier
+                    self.model = XGBClassifier()
+                case 'LightGBM':
+                    from lightgbm import LGBMClassifier
+                    self.model = LGBMClassifier()
+                case 'clustering':
+                    from sklearn.cluster import KMeans
+                    self.model = KMeans(n_clusters=3)
+                case 'Linear Regression':
+                    from sklearn.linear_model import LinearRegression
+                    self.model = LinearRegression()
+                case 'SVR':
+                    from sklearn.svm import SVR
+                    self.model = SVR()
+                case 'Auto Model Selection':
+                    best_model = self.choose_best_model()
+                    self.train_model(best_model)
+                case _:
+                    print('Invalid model name')
+            self.model.fit(self.X_train,self.y_train)
+            self.model_and_train[model_name] = self.model
+        except Exception as e:
+            probleme = 1
+            messagebox.showerror("Error", f"An error occurred during training: {str(e)}")
+
+
+        if probleme == 0 and not model_name == 'Auto Model Selection':
+            messagebox.showinfo("Training Complete", f"Model '{model_name}' has been successfully trained!")
         self.sharedState.set_training_finish(True)
+        print("Model Trained")
+        return probleme
 
 
     def predict(self):
+        # Remove id column from X_test if it exists
         self.y_pred = self.model.predict(self.X_test)
 
         self.sharedState.set_prediction_finish(True)
@@ -209,11 +334,27 @@ class TrainingProcess():
     
     
     def classification_report(self):
+        """
+        Generate and return a structured classification report as a dictionary.
+        """
         from sklearn.metrics import classification_report
-        self.sharedState.set_testing_finish(True)
 
-        return classification_report(self.y_test, self.y_pred)
+        # Ensure y_test and y_pred exist and are not None
+        if self.y_test is None or self.y_pred is None:
+            raise ValueError("y_test or y_pred is not defined. Ensure the model has been trained and tested.")
 
+        try:
+            # Generate the classification report as a dictionary
+            report = classification_report(self.y_test, self.y_pred, output_dict=True)
+
+            # Set a flag indicating the testing process has finished
+            self.sharedState.set_testing_finish(True)
+
+            # Return the structured report
+            return report
+
+        except Exception as e:
+            raise ValueError(f"Error generating classification report: {str(e)}")
 
 
     def evaluate(self):

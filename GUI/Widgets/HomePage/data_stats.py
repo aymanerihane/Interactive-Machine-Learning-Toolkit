@@ -2,9 +2,10 @@ import customtkinter as ctk
 from Controller.dataPreProcecing import DataPreProcessor as PreD
 
 class DataStats(ctk.CTkFrame):
-    def __init__(self, parent, sharedState):
+    def __init__(self, parent, sharedState,refresh_data_training_button):
         super().__init__(parent)
         self.sharedState = sharedState
+        self.refresh_data_training_button = refresh_data_training_button
         self.preprocess = PreD(sharedState=self.sharedState,just_for_method_use=True)
 
         # Define fonts
@@ -105,7 +106,7 @@ class DataStats(ctk.CTkFrame):
 
         # Add divider
         self.divider = ctk.CTkLabel(self.infoFrame, text="", fg_color=self.sharedState.DARK_COLOR, width=2)
-        self.divider.grid(row=0, column=1, sticky="ns", padx=0, pady=30)  # Use pady to subtract 10 pixels (5 on top, 5 on bottom)
+        self.divider.grid(row=0, column=1, sticky="ns", padx=0, pady=30)  
 
 
     def create_preprocessing_buttons(self):
@@ -239,6 +240,7 @@ class DataStats(ctk.CTkFrame):
                 actions[name]()
                 # Update the shared state after the preprocessing step
                 self.sharedState.set_data(self.preprocess.df)
+                self.sharedState.add_process(name)
                 print(f"'{name}' step completed successfully.")
             except Exception as e:
                 print(f"Error occurred while executing '{name}': {e}")
@@ -265,4 +267,5 @@ class DataStats(ctk.CTkFrame):
 
         if first:
             self.create_preprocessing_buttons()
+            self.refresh_data_training_button()
         

@@ -221,22 +221,28 @@ class DataInfo(ctk.CTkFrame):
             
 
             # Destroy any existing PreD instance
-
-            # Set the file path
-            self.preprocess = PreD(file_path = save_path,sharedState=self.sharedState)
-            data = pd.read_csv(save_path)
-            print(data)
-            self.sharedState.set_original_data(data)
-            self.sharedState.set_original_columns(data.columns)
-            self.sharedState.set_data(data,first=True)
-            self.preprocess.set_data_stats(self.refresh_data_stats)
-
+            if not test:
+                # Set the file path
+                self.preprocess = PreD(file_path = save_path,sharedState=self.sharedState)
+                data = pd.read_csv(save_path)
+                print(data)
+                self.sharedState.set_original_data(data)
+                self.sharedState.set_original_columns(data.columns)
+                self.sharedState.set_data(data,first=True)
+                self.preprocess.set_data_stats(self.refresh_data_stats)
+                self.sharedState.set_file_path(save_path)
+            else:
+                data = pd.read_csv(save_path)
+                self.sharedState.set_test_data(data)
 
             self.update_Scrollable_frame()
             if test:
                 self.sharedState.set_test_file_uploaded(True)
+
             else:
                 self.sharedState.set_file_uploaded(True)
+    
+          
 
             
 
