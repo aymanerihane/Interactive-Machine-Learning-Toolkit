@@ -140,15 +140,17 @@ class ChartHandler:
         return plt.gcf()
 
     def plot_pair(self,sharedState):
+        df = sharedState.get_original_data().copy()
         # Pair plot (scatter matrix) of the dataframe
         plt.figure(figsize=(10, 6))
-        if len(self.df.columns) > 3:
+        if len(df.columns) >= 5:
             # take just the 5 first columns and make the hue the target column
-            df = self.df.iloc[:, :3]
-            sns.pairplot(df, hue="Species")
-            plt.title("Pair Plot for First 3 Columns")
+            df = df.iloc[:, :5]
+            sns.pairplot(df, hue=sharedState.get_target_column())
+            plt.title("Pair Plot for First 5 Columns")
         else:
-            sns.pairplot(self.df)
+            sns.pairplot(df)
+            sns.pairplot(df, hue=sharedState.get_target_column())
             plt.title("Pair Plot")
 
         return plt.gcf()

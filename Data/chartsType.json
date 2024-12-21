@@ -51,7 +51,7 @@
                 "description": "Evaluates the true positive rate against the false positive rate for classifiers.",
                 "models": ["Classification"]
             },
-            "Precision-Recall Curve": {
+            "Precision Recall Curve": {
                 "description": "Visualizes the tradeoff between precision and recall for models.",
                 "models": ["Classification"]
             }

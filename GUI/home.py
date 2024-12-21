@@ -34,7 +34,7 @@ class HomePage(ctk.CTkFrame):
         self.scrollable_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
         # Info Section
-        self.data_info = DataInfo(self, self.sharedState, self.refresh_data_stats)
+        self.data_info = DataInfo(self, self.sharedState, self.refresh_data_stats,self.refresh_data_training_button)
         self.data_info.pack(pady=0, padx=0, fill="x", in_=self.scrollable_frame)
 
         # Details Section (Data Statistics)
@@ -44,6 +44,8 @@ class HomePage(ctk.CTkFrame):
         # Functionality Section
         self.functionality = FunctionalitySection(self, self.sharedState)
         self.functionality.pack(pady=0, padx=0, fill="x", in_=self.scrollable_frame)
+
+        
 
     def refresh_data_stats(self):
         """Refresh the DataStats widget."""

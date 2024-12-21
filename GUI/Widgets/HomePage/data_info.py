@@ -7,14 +7,16 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 from Controller.dataPreProcecing import DataPreProcessor as PreD
 import pandas as pd
-
+from tkinter import messagebox
 
 
 class DataInfo(ctk.CTkFrame):
-    def __init__(self, parent, sharedState, refresh_data_stats):
+    def __init__(self, parent, sharedState, refresh_data_stats,refresh_data_training_button):
         super().__init__(parent)
+        self.refresh_data_training_button = refresh_data_training_button
         self.statTestDataUpload = "disabled"
         self.sharedState = sharedState
+        self.switch_page = parent.switch_page
         self.refresh_data_stats = refresh_data_stats
         # Define the fonts
         self.FONT_TITLE = ctk.CTkFont(size=18, weight="bold")
@@ -24,6 +26,7 @@ class DataInfo(ctk.CTkFrame):
         self.infoFrame = ctk.CTkFrame(self, fg_color=self.sharedState.SECONDARY_COLOR)
         self.infoFrame.pack(pady=10, padx=20, fill="x")
         self.infoFrame.grid_rowconfigure(0, weight=1)
+        self.infoFrame.grid_rowconfigure(1, weight=1)
         self.infoFrame.grid_columnconfigure((0, 1), weight=1)
 
 
@@ -72,7 +75,7 @@ class DataInfo(ctk.CTkFrame):
         self.split_var = ctk.BooleanVar(value=False)
         ctk.CTkCheckBox(
             self.data_info_frame2,
-            text="Need to split?",
+            text="Test File ?",
             text_color=self.sharedState.WHITE,
             command=self.update_button_state,
             variable=self.split_var,
@@ -105,6 +108,18 @@ class DataInfo(ctk.CTkFrame):
 
         self.label_no_file = ctk.CTkLabel(self.scrollable_frame, text="No file uploaded yet", text_color=self.sharedState.WHITE, font=self.FONT_LABEL)
         self.label_no_file.grid(row=0, column=0, padx=10, pady=10)
+        
+
+        
+
+    def visualize_data(self):
+        print("Visualize Data clicked!")
+        if self.sharedState.get_file_uploaded():
+            self.switch_page("visualization")
+        else:
+            error_message = "Please upload a file first!"
+            #prompt
+            messagebox.showerror("Error", error_message)
 
 
     def load_file(self):
@@ -149,6 +164,13 @@ class DataInfo(ctk.CTkFrame):
         self.radio_var.set(columns[-1])
         self.sharedState.set_target_column(columns[-1])
 
+        ##title 
+        self.visualizeTitle = ctk.CTkLabel(self.infoFrame, text="Visualization:", font=self.FONT_TITLE, anchor="center")
+        self.visualizeTitle.grid(row=1, column=0, padx=5, pady=5, sticky="ew")
+
+        ##button
+        self.VisualizeButton = ctk.CTkButton(self.infoFrame, text="Visualize Data", command=self.visualize_data)
+        self.VisualizeButton.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
 
 
 
@@ -173,19 +195,23 @@ class DataInfo(ctk.CTkFrame):
             self.button2.configure(state="disabled")  # Disable button
         print(f"Button state updated to: {self.statTestDataUpload}")
         
+        
 
     def update_target(self):
-        self.sharedState.set_has_target(self.target_var.get())
+        
         if self.target_var.get():
             # Enable widgets in self.scrollable_frame
             for widget in self.scrollable_frame.winfo_children():
                 if isinstance(widget, ctk.CTkRadioButton):
                     widget.configure(state="normal")
+            self.sharedState.set_has_target(True)
         else:
             # Disable widgets in self.scrollable_frame
             for widget in self.scrollable_frame.winfo_children():
                 if isinstance(widget, ctk.CTkRadioButton):
                     widget.configure(state="disabled")
+            self.sharedState.set_has_target(False)
+        self.refresh_data_training_button()
 
     def upload_file(self,test=False):
         # Ask the user to select a file

@@ -5,7 +5,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", 
 
 from GUI.Widgets.Visualization.charts.baseChart import BaseChart
 
-class ROCCurve(BaseChart):  # Inherit from CTkFrame for a reusable widget
+class ROCCurves(BaseChart):  # Inherit from CTkFrame for a reusable widget
     def __init__(self, parent, switch_page,sharedState):
         super().__init__(parent, switch_page,sharedState, chart_type="ROC Curve", has_y_axis=False,no_x_y=True,just_num=True)
 

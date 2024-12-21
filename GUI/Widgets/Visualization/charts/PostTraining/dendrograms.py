@@ -7,7 +7,7 @@ from GUI.Widgets.Visualization.charts.baseChart import BaseChart
 
 class Dendrograms(BaseChart):  # Inherit from CTkFrame for a reusable widget
     def __init__(self, parent, switch_page,sharedState):
-        super().__init__(parent, switch_page,sharedState, chart_type="Dendrograms", has_y_axis=False,no_x_y=False,just_num=True)
+        super().__init__(parent, switch_page,sharedState, chart_type="Dendrograms", has_y_axis=False,no_x_y=True,just_num=True)
 
 
 

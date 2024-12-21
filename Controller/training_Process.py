@@ -92,88 +92,92 @@ class TrainingProcess():
         except:
             raise ValueError("Data not imported")
 
-        # Default best model initialization
         best_model = None
 
         # Classification task
         if task == 'classification':
-            # Priority rules for classification
+            # Main model recommendations
             if data_type == 'continuous':
                 if size == 'small':
-                    best_model = "SVM"  # Small dataset with continuous data, use SVM
-                else:
-                    best_model = "Random Forest"  # Large dataset with continuous data, use Random Forest
-
+                    best_model = "SVM"
+                else:  # size == 'large'
+                    best_model = "Random Forest"
             elif data_type == 'categorical':
-                best_model = "Naive Bayes"  # Categorical data, Naive Bayes
-                if size == 'large':
-                    best_model = "XGBoost"  # For large datasets with categorical data, prefer XGBoost
-
+                if size == 'small':
+                    best_model = "Naive Bayes"
+                else:  # size == 'large'
+                    best_model = "XGBoost"
             elif data_type == 'mixed':
-                best_model = "Random Forest"  # Mixed data type, prefer Random Forest
+                best_model = "Random Forest"
 
-            # Handle class imbalance
-            if balance == 'imbalanced' and best_model != "XGBoost":
-                best_model = "Random Forest"  # For imbalanced classes, use Random Forest
-            elif balance == 'balanced' and best_model != "Logistic Regression":
-                best_model = "Logistic Regression"  # For balanced classes, prefer Logistic Regression
+            # Adjustments based on class balance
+            if balance == 'imbalanced':
+                if best_model not in ["XGBoost", "Random Forest"]:
+                    best_model = "Random Forest"
+            elif balance == 'balanced':
+                if best_model not in ["Logistic Regression", "SVM"]:
+                    best_model = "Logistic Regression"
 
-            # High-dimensional feature space
+            # Adjustments for high-dimensional feature space
             if features == 'high' and best_model != "SVM":
-                best_model = "SVM"  # For high-dimensional data, use SVM
-            elif features == 'low' and best_model != "Logistic Regression":
-                best_model = "Logistic Regression"  # For low-dimensional data, use Logistic Regression
+                best_model = "SVM"
 
         # Regression task
         elif task == 'regression':
-            # Priority rules for regression
+            # Main model recommendations
             if data_type == 'continuous':
                 if size == 'small':
-                    best_model = "Linear Regression"  # Small dataset with continuous data, use Linear Regression
-                else:
-                    best_model = "Random Forest"  # Large dataset with continuous data, use Random Forest
-
+                    best_model = "Linear Regression"
+                else:  # size == 'large'
+                    best_model = "Random Forest"
             elif data_type == 'categorical':
-                best_model = "Decision Tree"  # Categorical data for regression, Decision Tree
-                if size == 'large':
-                    best_model = "Random Forest"  # For large datasets with categorical data, prefer Random Forest
-
+                if size == 'small':
+                    best_model = "Decision Tree"
+                else:  # size == 'large'
+                    best_model = "Random Forest"
             elif data_type == 'mixed':
-                best_model = "Gradient Boosting"  # Mixed data type for regression, prefer Gradient Boosting
+                best_model = "Gradient Boosting"
 
-            # High-dimensional feature space
-            if features == 'high' and best_model != "LightGBM":
-                best_model = "LightGBM"  # For high-dimensional data, use LightGBM
-            elif features == 'low' and best_model != "Linear Regression":
-                best_model = "Linear Regression"  # For low-dimensional data, use Linear Regression
+            # Adjustments for high-dimensional feature space
+            if features == 'high' and best_model not in ["LightGBM", "Gradient Boosting"]:
+                best_model = "LightGBM"
 
-        # General model recommendations based on size
-        if size == 'large' and best_model != "Random Forest":
-            best_model = "Random Forest"  # For large datasets, prefer Random Forest
-        elif size == 'small' and best_model != "Decision Tree":
-            best_model = "Decision Tree"  # For small datasets, prefer Decision Tree
-        
-        if task == 'clustering':
+        # Catch-all for general dataset size recommendations
+        if size == 'large' and best_model not in ["Random Forest", "XGBoost", "LightGBM"]:
+            best_model = "Random Forest"
+        elif size == 'small' and best_model not in ["Decision Tree", "SVM", "Linear Regression"]:
+            best_model = "Decision Tree"
+
+        # Handle clustering (if misclassified in task)
+        if self.sharedState.get_has_target() == False:
             best_model = "clustering"
 
         self.set_best_model(best_model)
-        return best_model  # Return the single best model
+        return best_model
 
-        
 
     def train_model(self,model_name):
         self.model_name = model_name
         self.sharedState.set_model_name(model_name)
         self.split_data()
         probleme = 0
+        _,_,_,_,task = self.sharedState.get_data_info()
         try :
             match model_name:
                 case 'Random Forest':
                     from sklearn.ensemble import RandomForestClassifier
-                    self.model = RandomForestClassifier()
+                    from sklearn.ensemble import RandomForestRegressor
+                    if task == 'regression':
+                        self.model = RandomForestRegressor()
+                    else:
+                        self.model = RandomForestClassifier()
                 case 'Decision Tree':
                     from sklearn.tree import DecisionTreeClassifier
-                    self.model = DecisionTreeClassifier()
+                    from sklearn.tree import DecisionTreeRegressor
+                    if task == 'regression':
+                        self.model = DecisionTreeRegressor()
+                    else:
+                        self.model = DecisionTreeClassifier()
                 case 'Logistic Regression':
                     from sklearn.linear_model import LogisticRegression
                     self.model = LogisticRegression()
@@ -188,10 +192,18 @@ class TrainingProcess():
                     self.model = GaussianNB()
                 case 'XGBoost':
                     from xgboost import XGBClassifier
-                    self.model = XGBClassifier()
+                    from xgboost import XGBRegressor
+                    if task == 'regression':
+                        self.model = XGBRegressor()
+                    else:
+                        self.model = XGBClassifier()
                 case 'LightGBM':
                     from lightgbm import LGBMClassifier
-                    self.model = LGBMClassifier()
+                    from lightgbm import LGBMRegressor
+                    if task == 'regression':
+                        self.model = LGBMRegressor()
+                    else:
+                        self.model = LGBMClassifier()
                 case 'clustering':
                     from sklearn.cluster import KMeans
                     self.model = KMeans(n_clusters=3)
@@ -275,9 +287,16 @@ class TrainingProcess():
         self.predict()
         self.evaluate()
 
+    def predict_sample(self,sample):
+        """
+        Predict the target value for a sample input.
+        """
+        # Ensure the model has been trained
+        if self.model is None:
+            raise ValueError("Model has not been trained. Please train the model before making predictions.")
+        
+        process = PreD(sharedState=self.sharedState,file_path=self.sharedState.get_file_path())
+        sample  = process.apply_to_test(sample)
 
-
-
-    
-
-    
+       # sample is pdframe
+        return self.model.predict(sample)

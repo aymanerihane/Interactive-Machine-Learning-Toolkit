@@ -5,6 +5,7 @@ class DataStats(ctk.CTkFrame):
     def __init__(self, parent, sharedState,refresh_data_training_button):
         super().__init__(parent)
         self.sharedState = sharedState
+        self.switch_page = parent.switch_page
         self.refresh_data_training_button = refresh_data_training_button
         self.preprocess = PreD(sharedState=self.sharedState,just_for_method_use=True)
 
@@ -257,7 +258,26 @@ class DataStats(ctk.CTkFrame):
         self.preprocess.set_data_stats(None,refreach=False)
         self.update_stats()
         self.sharedState.set_preprocessing_finish(True)
+        if self.button_export is not None:
+            self.button_export.configure(state=ctk.NORMAL)
 
+    def export_processed_data_button(self):
+        """Export the processed data to a CSV file."""
+        def on_export_click():
+            if self.sharedState.get_data() is not None and self.sharedState.get_preprocessing_finish():
+                # Export data csv or excel
+                file_path = self.sharedState.get_file_path()
+                save_path = f"{file_path.split('.')[0]}_processed.csv"
+                self.sharedState.get_data().to_csv(save_path, index=False)
+                print(f"Processed data saved to: {save_path}")
+            else:
+                print("No data to export yet.")
+
+        # Export button
+        self.button_export = ctk.CTkButton(self.preProcessingFrame, text="Export Processed Data", command=on_export_click)
+        self.button_export.grid(row=4, column=1, columnspan=3, padx=5, pady=5, sticky="ew")
+        self.button_export.configure(state=ctk.DISABLED)
+            
 
     def update_stats(self,first=False):
         number_of_nan_values, number_of_missing_values, number_of_classes,data_shape,data_balanced,number_of_categorical_columns,number_of_numerical_columns,duplicated=self.sharedState.get_data_stats()
@@ -275,4 +295,5 @@ class DataStats(ctk.CTkFrame):
         if first:
             self.create_preprocessing_buttons()
             self.refresh_data_training_button()
+            self.export_processed_data_button()
         

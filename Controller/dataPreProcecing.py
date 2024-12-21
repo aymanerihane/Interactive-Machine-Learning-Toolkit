@@ -247,16 +247,18 @@ class DataPreProcessor:
             balance (str, optional): 'balanced' or 'imbalanced' (only for classification).
             """
         #find the task using the target column
-        if self.sharedState.get_has_target():
-            if self.sharedState.get_target_column() is not None:
-                if self.df[self.sharedState.get_target_column()].dtype == 'object' or len(self.df[self.sharedState.get_target_column()].unique()) < 10:
+        try:
+            if self.sharedState.get_has_target():
+                if self.df[self.sharedState.get_target_column()].dtype == 'object' or len(self.df[self.sharedState.get_target_column()].unique()) < 10 :
                     task = 'classification'    
                 else:
                     task = 'regression'
             else:
-                task = None
-        else:
-            task = "clustering"
+                task = "clustering"
+        except ValueError:
+            raise ValueError("Target column not found")
+            
+            
 
         print("Task: ", task)
 

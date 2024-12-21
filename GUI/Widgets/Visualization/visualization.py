@@ -158,8 +158,18 @@ class VisualizationPage(ctk.CTkFrame):
                     frame.bind("<Button-1>", lambda event, chart_name=chart_name: self.switch_page(chart_name))
 
                 else:
-                    # For pre-training, all charts are available
-                    self._add_chart_interaction(frame, chart_name, available_models)
+                    if chart_name == "Precision Recall Curve" or chart_name == "ROC Curves":
+                        # cehck if class is binary if not not available
+                        number_of_clases = self.sharedState.get_original_data()[self.sharedState.get_target_column()].nunique()
+                        print("number of classes: ",number_of_clases)
+
+                        if number_of_clases > 2:
+                            not_available_label = ctk.CTkLabel(frame, corner_radius=15, text="Not Available", font=("Arial", 10, "italic"), fg_color="gray")
+                            not_available_label.pack(pady=5)
+                        else:
+                            self._add_chart_interaction(frame, chart_name, available_models)
+                    else:
+                        self._add_chart_interaction(frame, chart_name, available_models)
 
                 col += 1
                 if col == 3:  # Adjust number of columns per row
@@ -183,8 +193,7 @@ class VisualizationPage(ctk.CTkFrame):
             not_available_label.pack(pady=5)
 
         else:
-            _, _, _, _, task = self.sharedState.get_data_info()
-            
+            _, _, _, _, task = self.sharedState.get_data_info()            
             # Check if the model is available in lisModel_available
             if any(task == modele.lower() for modele in lisModel_available):
                 # Display "Available" label

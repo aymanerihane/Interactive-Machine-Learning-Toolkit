@@ -168,7 +168,7 @@ class BaseChart(ctk.CTkFrame):
                 if not len(data.columns) < 2:
                     self.selected_y_column = data.columns[1]
                 else:
-                    error_message = "No Numerical columns found in the data"
+                    error_message = "No type needed of columns found in the data"
                     # prompt
                     messagebox.showerror("Error", error_message)
                     raise ValueError(error_message)
