@@ -1,49 +1,49 @@
 class SharedState():
     def __init__(self):
         super().__init__()
-        self.file_uploaded = False
-        self.file_path = None
-        self.test_file_uploaded = False
-        self.has_target = True 
-        self.target_culumn = None  
-        self.has_split= False 
-        self.training_finish = False
-        self.testing_finish = False
-        self.preprocessing_finish = False
-        self.prediction_finish = False
-        self.labels = None
+        self._file_uploaded = False
+        self._file_path = None
+        self._test_file_uploaded = False
+        self._has_target = True 
+        self._target_culumn = None  
+        self._has_split= False 
+        self._training_finish = False
+        self._testing_finish = False
+        self._preprocessing_finish = False
+        self._prediction_finish = False
+        self._labels = None
 
         #data info
-        self.data_type = None
-        self.balance = None
-        self.size = None
-        self.features = None
-        self.task = None
-        self.duplicate_columns = None
+        self._data_type = None
+        self._balance = None
+        self._size = None
+        self._features = None
+        self._task = None
+        self._duplicate_columns = None
         
 
         ##data stats
-        self.number_of_nan_values = None
-        self.number_of_missing_values = None
-        self.number_of_classes = None
-        self.data_shape = None
-        self.data_balanced = None 
-        self.number_of_categorical_columns = None
-        self.number_of_numerical_columns = None
+        self._number_of_nan_values = None
+        self._number_of_missing_values = None
+        self._number_of_classes = None
+        self._data_shape = None
+        self._data_balanced = None 
+        self._number_of_categorical_columns = None
+        self._number_of_numerical_columns = None
         
         
 
 
         # Data
-        self.data = None
-        self.original_data = None
-        self.columns = None
-        self.original_columns = None
-        self.test_data = None
-        self.process_done=[]
-        self.model_name = None
-        self.model = None
-        self.test_new_data = None
+        self._data = None
+        self._original_data = None
+        self._columns = None
+        self._original_columns = None
+        self._test_data = None
+        self._process_done=[]
+        self._model_name = None
+        self._model = None
+        self._test_new_data = None
 
         
 
@@ -56,15 +56,13 @@ class SharedState():
         self.ERROR_COLOR = "#FF5A5F"
         self.DARK_COLOR = "#333333"
 
-        
-
     # Setters
 
     def set_test_new_data(self,new):
-        self.test_new_data = new
+        self._test_new_data = new
 
     def set_model(self,model):
-        self.model = model
+        self._model = model
     def set_y_test(self, y_test):
         self.y_test = y_test
 
@@ -72,52 +70,52 @@ class SharedState():
         self.y_pred = y_pred
         
     def set_labels(self, labels):
-        self.labels = labels
+        self._labels = labels
 
     def set_model_name(self, name):
-        self.model_name = name
+        self._model_name = name
 
     def set_file_path(self, path):
-        self.file_path = path
+        self._file_path = path
 
     def set_test_data(self, data):
-        self.test_data = data
+        self._test_data = data
 
     def add_process(self, value):
-        self.process_done.append(value)
+        self._process_done.append(value)
 
     def set_new_process(self):
-        self.process_done = []
+        self._process_done = []
 
     def set_preprocessing_finish(self,value):
-        self.preprocessing_finish = value
+        self._preprocessing_finish = value
 
     def set_original_columns(self,value):
-        self.original_columns = value
+        self._original_columns = value
         self.set_preprocessing_finish(False)
 
     def set_data_stats(self, nan, missing, classes, shape, balanced, cat, num,duplicate_columns):
-        self.number_of_nan_values = nan
-        self.number_of_missing_values = missing
-        self.number_of_classes = classes
-        self.data_shape = shape
-        self.data_balanced = balanced
-        self.number_of_categorical_columns = cat
-        self.number_of_numerical_columns = num
-        self.duplicate_columns = duplicate_columns
+        self._number_of_nan_values = nan
+        self._number_of_missing_values = missing
+        self._number_of_classes = classes
+        self._data_shape = shape
+        self._data_balanced = balanced
+        self._number_of_categorical_columns = cat
+        self._number_of_numerical_columns = num
+        self._duplicate_columns = duplicate_columns
 
     def set_columns(self, columns):
-        self.columns = columns
+        self._columns = columns
 
     def set_data_info(self, task, type, size, features, balance):
-        self.data_type = type
-        self.balance = balance
-        self.size = size
-        self.features = features
-        self.task = task
+        self._data_type = type
+        self._balance = balance
+        self._size = size
+        self._features = features
+        self._task = task
 
     def set_data(self, data,first = False):
-        self.data = data
+        self._data = data
         self.set_columns(data.columns)
         if first:
             print("First time")
@@ -125,103 +123,103 @@ class SharedState():
             self.set_target_column(data.columns[-1])
     
     def set_original_data(self, data):
-        self.original_data = data.copy()
-        # self.original_columns(data.columns)
+        self._original_data = data.copy()
+        # self._original_columns(data.columns)
 
     def set_file_uploaded(self, value):
-        self.file_uploaded = value
+        self._file_uploaded = value
 
     def set_test_file_uploaded(self, value):
-        self.test_file_uploaded = value
+        self._test_file_uploaded = value
 
     def set_has_target(self, value):
-        self.has_target = value
-        print("Has target: ", self.has_target)
+        self._has_target = value
+        print("Has target: ", self._has_target)
     
     def set_target_column(self, value):
         print("value: ",value)
-        self.target_culumn = value
-        print("Target column: ", self.target_culumn)
+        self._target_culumn = value
+        print("Target column: ", self._target_culumn)
     
     def set_has_split(self, value): 
-        self.has_split = value
+        self._has_split = value
     
     def set_training_finish(self, value):
-        self.training_finish = value
+        self._training_finish = value
     
     def set_testing_finish(self, value):
-        self.testing_finish = value
+        self._testing_finish = value
 
     def set_prediction_finish(self, value):
-        self.prediction_finish = value
+        self._prediction_finish = value
 
     # Getters
 
     def get_original_columns(self):
-        return self.original_columns
+        return self._original_columns
 
     def get_data_stats(self):
-        return self.number_of_nan_values, self.number_of_missing_values, self.number_of_classes, self.data_shape, self.data_balanced, self.number_of_categorical_columns, self.number_of_numerical_columns, self.duplicate_columns
+        return self._number_of_nan_values, self._number_of_missing_values, self._number_of_classes, self._data_shape, self._data_balanced, self._number_of_categorical_columns, self._number_of_numerical_columns, self._duplicate_columns
     
 
     def get_columns(self):
-        print("Columns: ", self.columns)
-        return self.columns
+        print("Columns: ", self._columns)
+        return self._columns
 
     def get_data(self):
-        return self.data
+        return self._data
     
     def get_original_data(self):
-        return self.original_data
+        return self._original_data
 
     def get_data_info(self):
-        return self.data_type, self.balance, self.size, self.features, self.task
+        return self._data_type, self._balance, self._size, self._features, self._task
 
     def get_test_file_uploaded(self):
-        return self.test_file_uploaded
+        return self._test_file_uploaded
     
 
     def get_file_uploaded(self):
-        return self.file_uploaded
+        return self._file_uploaded
 
     def get_has_target(self):
-        return self.has_target
+        return self._has_target
     
     def get_target_column(self):
-        return self.target_culumn
+        return self._target_culumn
     
     def get_has_split(self):
-        return self.has_split
+        return self._has_split
     
     def get_training_finish(self):
-        return self.training_finish
+        return self._training_finish
     
     def get_testing_finish(self):
-        return self.testing_finish
+        return self._testing_finish
     
     def get_prediction_finish(self):
-        return self.prediction_finish
+        return self._prediction_finish
     
     def get_preprocessing_finish(self):
-        return self.preprocessing_finish
+        return self._preprocessing_finish
 
     def get_target_column_index(self):
         return self.index_of_target
     
     def get_process_done(self):
-        return self.process_done
+        return self._process_done
     
     def get_test_data(self):
-        return self.test_data
+        return self._test_data
     
     def get_file_path(self):
-        return self.file_path
+        return self._file_path
     
     def get_model_name(self):
-        return self.model_name
+        return self._model_name
     
     def get_labels(self):
-        return self.labels
+        return self._labels
     
     def get_y_test(self):
         return self.y_test
@@ -229,7 +227,7 @@ class SharedState():
         return self.y_pred
     
     def get_model(self):
-        return self.model 
+        return self._model 
     
     def get_test_new_data(self):
-        return self.test_new_data
+        return self._test_new_data

@@ -35,11 +35,12 @@ class DataInfo(ctk.CTkFrame):
         ##################################
         self.data_info_frame1 = ctk.CTkFrame(self.infoFrame, corner_radius=10, fg_color=self.sharedState.WHITE)
         self.data_info_frame1.grid(row=0, column=0, padx=20, pady=10, sticky="nsw")
+        self.data_info_frame1.grid_columnconfigure(1, weight=2)
         self.data_info_frame1.grid_rowconfigure((0, 1), weight=1)
 
         # Label and button for "Data Upload"
-        self.label1 = ctk.CTkLabel(self.data_info_frame1, text="Data Upload", text_color=self.sharedState.TEXT_COLOR, font=self.FONT_LABEL)
-        self.label1.grid(row=0, column=0, padx=10, pady=10)
+        self.label1 = ctk.CTkLabel(self.data_info_frame1, text="Upload Data :", text_color=self.sharedState.TEXT_COLOR, font=self.FONT_LABEL)
+        self.label1.grid(row=0, column=0, padx=0, pady=10)
         self.button1 = ctk.CTkButton(
             self.data_info_frame1,
             text="Upload Data",
@@ -57,7 +58,7 @@ class DataInfo(ctk.CTkFrame):
         self.data_info_frame2.grid_columnconfigure((0, 1), weight=1)
 
         # "Data Info" label and button
-        self.label2 = ctk.CTkLabel(self.data_info_frame2, text="Data Info", text_color=self.sharedState.WHITE, font=self.FONT_LABEL)
+        self.label2 = ctk.CTkLabel(self.data_info_frame2, text="Upload Test Data :", text_color=self.sharedState.WHITE, font=self.FONT_LABEL)
         self.label2.grid(row=1, column=1, padx=10, pady=10)
         self.button2 = ctk.CTkButton(
             self.data_info_frame2,
@@ -136,6 +137,11 @@ class DataInfo(ctk.CTkFrame):
             raise e
             # return
         data = pd.read_csv(self.csv_file)
+
+        self.label1.configure(text="Data uploaded successfully", text_color="green")
+        #make the has taget checkbox active
+        self.target_var.set(True)
+        self.sharedState.set_has_target(True)
         
         return data
 
@@ -246,6 +252,8 @@ class DataInfo(ctk.CTkFrame):
 
             
 
+            
+
             # Destroy any existing PreD instance
             if not test:
                 # Set the file path
@@ -259,6 +267,7 @@ class DataInfo(ctk.CTkFrame):
                 self.sharedState.set_file_path(save_path)
             else:
                 data = pd.read_csv(save_path)
+                self.label2.configure(text="uploaded successfully", text_color="green")
                 self.sharedState.set_test_data(data)
 
             self.update_Scrollable_frame()

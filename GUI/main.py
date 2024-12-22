@@ -24,7 +24,7 @@ class MainApp(ctk.CTk):
     def __init__(self, sharedState):
         super().__init__()
         self.sharedState = sharedState
-        self.title("Multi-Page Application")
+        self.title("Interactive Machine Learning Visualization Tool")
         self.geometry("1100x700")
         self.configure(fg_color="#F5F5F5")  # Set background to light gray
 

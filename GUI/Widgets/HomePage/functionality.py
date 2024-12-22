@@ -93,6 +93,15 @@ class FunctionalitySection(ctk.CTkFrame):
     
         self.SecondRowFrame = ctk.CTkFrame(self.trainingFrame, fg_color="transparent")
 
+
+
+        self.PredictionFrame1 = ctk.CTkFrame(self, fg_color="transparent", border_color=self.sharedState.DARK_COLOR, border_width=2)
+        
+
+
+        
+
+
     def create_classification_report_table(self):
         """
         Create a table for the classification report and display it inside the ClassificationReportFrame.
@@ -440,7 +449,7 @@ class FunctionalitySection(ctk.CTkFrame):
             good_result_label.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
 
             # Generate the regression plot
-            fig = plt.Figure(figsize=(6, 4), dpi=100)
+            fig = plt.Figure(figsize=(5, 3), dpi=100)
             ax = fig.add_subplot(111)
             sns.scatterplot(x=y_test, y=y_pred, ax=ax, color="blue", label="Predicted vs True")
             sns.lineplot(x=y_test, y=y_test, ax=ax, color="red", label="Perfect Fit")
@@ -505,7 +514,7 @@ class FunctionalitySection(ctk.CTkFrame):
             else:
                 metrics_text = "True labels not provided.\n"
 
-            silhouette_avg = silhouette_score(self.training.X_test, y_pred)
+            silhouette_avg = silhouette_score(self.training._X_test, y_pred)
             metrics_text += f"Silhouette Score: {silhouette_avg:.2f}"
 
             # Display metrics
@@ -539,11 +548,11 @@ class FunctionalitySection(ctk.CTkFrame):
 
 
             # Generate the clustering plot
-            fig = plt.Figure(figsize=(6, 4), dpi=100)
+            fig = plt.Figure(figsize=(5, 3), dpi=100)
             ax = fig.add_subplot(111)
 
             # Scatter plot with clusters
-            features = self.training.X_test.values
+            features = self.training._X_test.values
             scatter = ax.scatter(features[:, 0], features[:, 1], c=y_pred, cmap="viridis", s=50, alpha=0.7)
             ax.set_xlabel("Feature 1")
             ax.set_ylabel("Feature 2")
@@ -606,8 +615,14 @@ class FunctionalitySection(ctk.CTkFrame):
         """
         Create a widget for making new predictions based on user input.
         """
+        #new frame with birder in self for prediction new data
+        self.PredictionFrame1.grid(row=1, column=0, sticky="w", padx=10, pady=10)
+
+        # Destroy all children of PredictionFrame1
+        for widget in self.PredictionFrame1.winfo_children():
+            widget.destroy()
         # Prediction Frame
-        self.PredictionFrame = ctk.CTkFrame(self.trainingFrame, fg_color="transparent")
+        self.PredictionFrame = ctk.CTkFrame(self.PredictionFrame1, fg_color="transparent")
         self.PredictionFrame.grid(row=4, column=0, columnspan=5, sticky="nsew", padx=10, pady=10)
 
         # Title

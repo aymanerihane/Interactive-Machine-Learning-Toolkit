@@ -17,8 +17,8 @@ class DataPreProcessor:
         else:
             self.sharedState = sharedState
         if not just_for_method_use:
-            self.df = pd.read_csv(file_path)
-            self.sharedState.set_data(self.df,first = True)
+            self._df = pd.read_csv(file_path)
+            self.sharedState.set_data(self._df,first = True)
 
 
 
@@ -40,25 +40,25 @@ class DataPreProcessor:
 
 
     def set_data(self,data):
-        self.df = data
+        self._df = data
         self.set_data_info()
-        self.sharedState.set_data(self.df)
+        self.sharedState.set_data(self._df)
 
     def set_data_stats(self,refresh_data_stats,refreach = True):
         """
         Set the data statistics in the shared state.
         """
-        nan_values = self.df.isnull().sum().sum()
-        missing_values = self.df.isna().sum().sum()
-        num_classes = len(self.df[self.sharedState.target_culumn].unique()) if self.sharedState.target_culumn is not None else 0
-        data_shape = self.df.shape
-        num_categorical_cols = self.df.select_dtypes(include=['object']).shape[1]
-        num_numerical_cols = self.df.select_dtypes(include=['float64', 'int64','int32']).shape[1]
-        balanced = 'Yes' if num_classes > 1 and self.df[self.sharedState.target_culumn].value_counts(normalize=True).min() > 0.05 else 'No'
+        nan_values = self._df.isnull().sum().sum()
+        missing_values = self._df.isna().sum().sum()
+        num_classes = len(self._df[self.sharedState.get_target_column()].unique()) if self.sharedState.get_target_column() is not None else 0
+        data_shape = self._df.shape
+        num_categorical_cols = self._df.select_dtypes(include=['object']).shape[1]
+        num_numerical_cols = self._df.select_dtypes(include=['float64', 'int64','int32']).shape[1]
+        balanced = 'Yes' if num_classes > 1 and self._df[self.sharedState.get_target_column()].value_counts(normalize=True).min() > 0.05 else 'No'
         
 
         #find duplicate columns number
-        duplicate_columns = self.df.columns.duplicated().sum()
+        duplicate_columns = self._df.columns.duplicated().sum()
         print("Data stats set")
         print("Nan values: ", nan_values, "Missing values: ", missing_values, "Number of classes: ", num_classes, "Data shape: ", data_shape, "Number of categorical columns: ", num_categorical_cols, "Number of numerical columns: ", num_numerical_cols, duplicate_columns)
 
@@ -71,7 +71,7 @@ class DataPreProcessor:
         """
         Reduce the number of features using correlation.
         """
-        df = data.copy() if data is not None else self.df.copy()
+        df = data.copy() if data is not None else self._df.copy()
         # Calculate the correlation matrix
         corr_matrix = df.corr().abs()
         
@@ -97,16 +97,16 @@ class DataPreProcessor:
         Clean missing values in numerical and categorical columns.
 
         """
-        df = data.copy() if data is not None else self.df.copy()
+        df = data.copy() if data is not None else self._df.copy()
         if 'id' in [col.lower() for col in df.columns]:
             df.drop(columns=[col for col in df.columns if col.lower() == 'id'], inplace=True)
         # Categorical columns
         for column in df.select_dtypes(include=['object']).columns:
-            df[column] = self.imputer.fit_transform(self.df[column].values.reshape(-1, 1)).ravel()
+            df[column] = self.imputer.fit_transform(self._df[column].values.reshape(-1, 1)).ravel()
         
         # Numerical columns
-        for column in self.df.select_dtypes(include=['number']).columns:
-            df[column] = self.num_imputer.fit_transform(self.df[column].values.reshape(-1, 1))
+        for column in self._df.select_dtypes(include=['number']).columns:
+            df[column] = self.num_imputer.fit_transform(self._df[column].values.reshape(-1, 1))
         
         if data is None:
             self.sharedState.set_data(df)
@@ -118,14 +118,14 @@ class DataPreProcessor:
         """
         Apply scaling to numerical columns.
         """
-        df = data.copy() if data is not None else self.df.copy()
+        df = data.copy() if data is not None else self._df.copy()
         
         num_cols = df.select_dtypes(include=['float64', 'int64','int32']).columns
         if len(num_cols) > 0:
             self.scaler.fit_transform(df[num_cols])
         
         if data is None:
-            self.sharedState.set_data(self.df)
+            self.sharedState.set_data(self._df)
         self.sharedState.set_preprocessing_finish(True)
 
 
@@ -137,14 +137,14 @@ class DataPreProcessor:
         This method helps retrieve the categorical values before encoding, so they can be used in plotting.
         """
         # Select categorical columns
-        cat_cols = self.df.select_dtypes(include=['object']).columns
+        cat_cols = self._df.select_dtypes(include=['object']).columns
         
         # Create a dictionary to hold the unique values of each categorical column
         unique_values_dict = {}
         
         for col in cat_cols:
             # Retrieve unique values for each categorical column
-            unique_values_dict[col] = self.df[col].unique().tolist()
+            unique_values_dict[col] = self._df[col].unique().tolist()
         
         return unique_values_dict
 
@@ -152,7 +152,7 @@ class DataPreProcessor:
         """
         Apply label encoding to categorical columns.
         """
-        df = data.copy() if data is not None else self.df.copy()
+        df = data.copy() if data is not None else self._df.copy()
         cat_cols = df.select_dtypes(include=['object']).columns
         print(cat_cols)
         for col in cat_cols:
@@ -223,12 +223,12 @@ class DataPreProcessor:
         """
         Convert date columns to datetime and extract features like day, month, year.
         """
-        df = data.copy() if data is not None else self.df.copy()
+        df = data.copy() if data is not None else self._df.copy()
         date_cols = df.select_dtypes(include=['object']).columns
         for col in date_cols:
             try:
                 # Try to convert to datetime
-                df[col] = pd.to_datetime(self.df[col], errors='coerce')
+                df[col] = pd.to_datetime(self._df[col], errors='coerce')
                 # Extract date features
                 df[col + '_day'] = df[col].dt.day
                 df[col + '_month'] = df[col].dt.month
@@ -246,7 +246,7 @@ class DataPreProcessor:
         """
         Apply TF-IDF vectorization to textual data.
         """
-        df = data.copy() if data is not None else self.df.copy()
+        df = data.copy() if data is not None else self._df.copy()
         text_column = df.select_dtypes(include=['object']).columns[0]
         if text_column in df.columns:
             tfidf_matrix = self.tfidf_vectorizer.fit_transform(df[text_column])
@@ -267,7 +267,7 @@ class DataPreProcessor:
         #find the task using the target column
         try:
             if self.sharedState.get_has_target():
-                if self.df[self.sharedState.get_target_column()].dtype == 'object' or len(self.df[self.sharedState.get_target_column()].unique()) < 10 :
+                if self._df[self.sharedState.get_target_column()].dtype == 'object' or len(self._df[self.sharedState.get_target_column()].unique()) < 10 :
                     task = 'classification'    
                 else:
                     task = 'regression'
@@ -283,28 +283,28 @@ class DataPreProcessor:
         
         
         #find the data type
-        if self.df.select_dtypes(include=['object']).shape[1] == self.df.shape[1]:
+        if self._df.select_dtypes(include=['object']).shape[1] == self._df.shape[1]:
             type = 'categorical'
-        elif self.df.select_dtypes(include=['float64', 'int64']).shape[1] == self.df.shape[1]:
+        elif self._df.select_dtypes(include=['float64', 'int64']).shape[1] == self._df.shape[1]:
             type = 'continuous'
         else:
             type = 'mixed'
 
         #find the size of the data
-        if self.df.shape[0] < 1000:
+        if self._df.shape[0] < 1000:
             size = 'small'
         else:
             size = 'large'
 
         #find the number of features
-        if self.df.shape[1] < 50:
+        if self._df.shape[1] < 50:
             features = 'low'
         else:
             features = 'high'   
 
         #find the balance of the data
         if task == 'classification':
-            if self.df[self.sharedState.get_target_column()].value_counts(normalize=True).min() < 0.05:
+            if self._df[self.sharedState.get_target_column()].value_counts(normalize=True).min() < 0.05:
                 balance = 'imbalanced'
             else:
                 balance = 'balanced'
@@ -326,11 +326,11 @@ class DataPreProcessor:
 
         # delete id column if it exists
         target_col = self.sharedState.get_target_column()
-        if 'id' in [col.lower() for col in self.df.columns]:
+        if 'id' in [col.lower() for col in self._df.columns]:
             # Drop the 'id' column (case-insensitive) and the target column
-            self.df.drop(columns=[col for col in self.df.columns if col.lower() == 'id'], inplace=True)
+            self._df.drop(columns=[col for col in self._df.columns if col.lower() == 'id'], inplace=True)
 
-            self.sharedState.set_data(self.df)
+            self.sharedState.set_data(self._df)
 
         self.unique_categorical_values = self.get_unique_categorical_values()
         # Retrieve dataset characteristics
@@ -346,7 +346,7 @@ class DataPreProcessor:
         # Step 2: Handle data type-specific preprocessing
         if data_type == 'categorical':
             applied_steps.append("Applying label encoding for categorical data")
-            self.df = self.label_encode(data)
+            self._df = self.label_encode(data)
             self.sharedState.add_process("Label Encode")
         elif data_type == 'continuous':
             applied_steps.append("Scaling numerical data")
@@ -356,7 +356,7 @@ class DataPreProcessor:
         elif data_type == 'mixed':
             applied_steps.append("Scaling numerical data and encoding categorical data")
             self.scale_data(data)
-            self.df = self.label_encode(data)
+            self._df = self.label_encode(data)
             self.sharedState.add_process("Scale Data")
             self.sharedState.add_process("Label Encode")
 
@@ -367,20 +367,20 @@ class DataPreProcessor:
             self.sharedState.add_process("Reduce Features")
         elif features == 'low':
             applied_steps.append("Applying feature augmentation")
-            self.df = self.apply_feature_augmentation(data)
+            self._df = self.apply_feature_augmentation(data)
             self.sharedState.add_process("Apply Feature Augmentation")
 
         # Step 4: Handle imbalanced data (only for classification)
         if task == 'classification' and balance == 'imbalanced':
             applied_steps.append("Balancing classes (e.g., using SMOTE or class weighting)")
-            self.df = self.balance_classes(data)
+            self._df = self.balance_classes(data)
             
             self.sharedState.add_process("Balance Classes")
 
         # Step 5: Handle outliers (only for continuous features)
         if data_type in ['continuous', 'mixed']:
             applied_steps.append("Handling outliers (IQR)")
-            self.df = self.handle_outliers(data)
+            self._df = self.handle_outliers(data)
             
             self.sharedState.add_process("Handle Outliers")
 
@@ -389,18 +389,18 @@ class DataPreProcessor:
             # Binarizing target column for binary classification tasks
             if len(self.sharedState.get_original_data()[self.sharedState.get_target_column()].unique()) == 2:
                 applied_steps.append("Binarizing target column for binary classification")
-                self.df = self.binarize_target(data)  # Only binarize if necessary
+                self._df = self.binarize_target(data)  # Only binarize if necessary
                 
                 self.sharedState.add_process("Binarize Target")
         elif task == 'regression':
             applied_steps.append("Applying log transformation for skewed continuous features")
-            self.df = self.transform_skewed_features(data)
+            self._df = self.transform_skewed_features(data)
             
             self.sharedState.add_process("Transform Skewed Features")
 
         # Step 7: General preprocessing
         applied_steps.append("Removing duplicate rows")
-        self.df.drop_duplicates(inplace=True)
+        self._df.drop_duplicates(inplace=True)
         self.sharedState.add_process("Remove Duplicates")
         applied_steps.append("Checking and standardizing data types")
         self.standardize_data_types(data)
@@ -414,19 +414,19 @@ class DataPreProcessor:
         target_col = self.sharedState.get_target_column()
 
         # Sort columns by name, ensuring the target column is last
-        cols = sorted([col for col in self.df.columns if col != target_col]) + [target_col]
-        self.df = self.df[cols]
+        cols = sorted([col for col in self._df.columns if col != target_col]) + [target_col]
+        self._df = self._df[cols]
         self.sharedState.add_process("Sorted")
         
-        self.sharedState.set_data(self.df)
+        self.sharedState.set_data(self._df)
         self.sharedState.set_preprocessing_finish(True)
-        return self.df, self.unique_categorical_values
+        return self._df, self.unique_categorical_values
 
     def apply_feature_augmentation(self,data=None,ignore_target = False):
         """
         Apply feature augmentation for low feature count datasets.
         """
-        df = data.copy() if data is not None else self.df.copy()
+        df = data.copy() if data is not None else self._df.copy()
 
         if not ignore_target:
             target_data = df[self.sharedState.get_target_column()]
@@ -455,7 +455,7 @@ class DataPreProcessor:
         """
         from imblearn.over_sampling import SMOTE
         
-        df = data.copy() if data is not None else self.df.copy()
+        df = data.copy() if data is not None else self._df.copy()
         smote = SMOTE(random_state=42)
         X_resampled, y_resampled = smote.fit_resample(df.drop(columns=[self.get]), df[self.sharedState.get_target_column()])
         df = pd.concat([X_resampled, y_resampled], axis=1)
@@ -469,7 +469,7 @@ class DataPreProcessor:
         """
         Handle outliers in numerical columns using the IQR method.
         """
-        df = data.copy() if data is not None else self.df.copy()
+        df = data.copy() if data is not None else self._df.copy()
         num_cols = self.get_numerical_columns(data=df)
         for col in num_cols:
             if 'id' == col.lower():
@@ -493,7 +493,7 @@ class DataPreProcessor:
         """
         Apply log transformation to skewed numerical columns.
         """
-        df = data.copy() if data is not None else self.df.copy()
+        df = data.copy() if data is not None else self._df.copy()
         num_cols = self.get_numerical_columns(data = df)
         for col in num_cols:
             if df[col].skew() > 1:  # Check if skewness > 1 (highly skewed)
@@ -508,7 +508,7 @@ class DataPreProcessor:
         """
         Ensure all columns have appropriate data types.
         """
-        df = data.copy() if data is not None else self.df.copy()
+        df = data.copy() if data is not None else self._df.copy()
         for col in df.columns:
             if df[col].dtype == 'object':
                 df[col] = df[col].astype('string')  # Standardize text columns as 'string'
@@ -523,14 +523,14 @@ class DataPreProcessor:
         """
         Get the names of numerical columns in the dataset.
         """
-        df = data.copy() if data is not None else self.df.copy()
+        df = data.copy() if data is not None else self._df.copy()
         return df.select_dtypes(include=['float64', 'int64']).columns.tolist()
 
     def binarize_target(self,data=None):
         """
         Binarize the target column for binary classification tasks.
         """
-        df = data.copy() if data is not None else self.df.copy()
+        df = data.copy() if data is not None else self._df.copy()
 
         if data is None:
             target_col = self.sharedState.get_target_column()
@@ -542,7 +542,7 @@ class DataPreProcessor:
     
     def reset(self):
         self.sharedState.set_data(self.sharedState.get_original_data())
-        self.df = self.sharedState.get_original_data().copy()
+        self._df = self.sharedState.get_original_data().copy()
         self.sharedState.set_preprocessing_finish(False)
         self.sharedState.set_new_process()
         self.sharedState.add_process("Reset")
