@@ -45,15 +45,9 @@ class TrainingProcess():
         self.best_model = model_name
 
     def split_data(self):
-        self.data= self.sharedState.get_data()
-        self.X = self.data.drop(self.sharedState.get_target_column(), axis=1)
+        self.data = self.sharedState.get_data().copy()
+        self.X = self.data.drop([self.sharedState.get_target_column()] + [col for col in self.data.columns if 'id' in col.lower()], axis=1)
         self.y = self.data[self.sharedState.get_target_column()]
-
-
-        #if id column exist drop it
-        id_columns = self.X.columns[self.X.columns.str.contains('id', case=False)]
-        if not id_columns.empty:
-            self.X = self.X.drop(id_columns[0], axis=1)
 
 
         if not self.sharedState.get_has_split():
@@ -220,7 +214,10 @@ class TrainingProcess():
                     self.train_model(best_model)
                 case _:
                     print('Invalid model name')
+            print("PetalWidthCm" in self.X_train.columns)
+            print(self.X_train.columns)
             self.model.fit(self.X_train,self.y_train)
+            self.sharedState.set_model(self.model)
             self.model_and_train[model_name] = self.model
         except Exception as e:
             probleme = 1
@@ -234,12 +231,33 @@ class TrainingProcess():
         return probleme
 
 
-    def predict(self):
+    def predict(self,data = None):
+        if data is not None:
+            process = PreD(sharedState=self.sharedState,file_path=self.sharedState.get_file_path())
+            self.sharedState.set_test_new_data(data)
+            X_test = self.sharedState.get_test_new_data()
+            if 'id' in [col.lower() for col in X_test.columns]:
+                X_test.drop(columns=[col for col in X_test.columns if col.lower() == 'id'], inplace=True)
+                self.sharedState.set_test_new_data(X_test)
+            
+            example = process.apply_to_test(self.sharedState.get_test_new_data(),sample = True)
+
+        test = example if data is not None else self.X_test
         # Remove id column from X_test if it exists
-        self.y_pred = self.model.predict(self.X_test)
+        # Ensure the test data has the same feature names as the training data
+        if data is not None:
+            test = test[self.X_test.columns]
+            print(test)
         
-        self.sharedState.set_y_pred(self.y_pred)
+        if data is None:
+            self.y_pred = self.model.predict(test)
+            y_pred = self.y_pred
+            self.sharedState.set_y_pred(self.y_pred)
+        else:
+            y_pred = self.model.predict(test)
         self.sharedState.set_prediction_finish(True)
+
+        return y_pred
 
     # Evaluate the model with difirent methode 
 
@@ -287,16 +305,23 @@ class TrainingProcess():
         self.predict()
         self.evaluate()
 
-    def predict_sample(self,sample):
-        """
-        Predict the target value for a sample input.
-        """
-        # Ensure the model has been trained
-        if self.model is None:
-            raise ValueError("Model has not been trained. Please train the model before making predictions.")
+    # def predict_sample(self,sample):
+    #     """
+    #     Predict the target value for a sample input.
+    #     """
+    #     # Ensure the model has been trained
+    #     if self.model is None:
+    #         raise ValueError("Model has not been trained. Please train the model before making predictions.")
+    #     process = PreD(sharedState=self.sharedState,file_path=self.sharedState.get_file_path())
+    #     self.sharedState.set_test_new_data(sample)
+    #     X_test = self.sharedState.get_test_new_data()
+    #     if 'id' in [col.lower() for col in X_test.columns]:
+    #         X_test.drop(columns=[col for col in X_test.columns if col.lower() == 'id'], inplace=True)
+    #         self.sharedState.set_test_new_data(X_test)
         
-        process = PreD(sharedState=self.sharedState,file_path=self.sharedState.get_file_path())
-        sample  = process.apply_to_test(sample)
-
-       # sample is pdframe
-        return self.model.predict(sample)
+    #     example = process.apply_to_test(self.sharedState.get_test_new_data(),sample = True)
+    #     print(example)
+        
+    #    # sample is pdframe
+    #     pred = self.model.predict(example)
+    #     return pred

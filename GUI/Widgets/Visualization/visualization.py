@@ -127,12 +127,8 @@ class VisualizationPage(ctk.CTkFrame):
 
                 # Load and add icon dynamically for each chart
                 image_path = os.path.join(self.current_dir, "images")  # Path to images folder
-                icon_path = os.path.join(image_path, "defaultIcon.png")
 
-                try:
-                    icon1 = Image.open(icon_path)
-                except FileNotFoundError:
-                    icon1 = Image.open(os.path.join(image_path, "iconCharts.png"))  # Default icon
+                icon1 = Image.open(os.path.join(image_path, "iconCharts.png"))  # Default icon
 
                 icon = ctk.CTkImage(light_image=icon1, dark_image=icon1, size=(24, 24))
                 icon_label = ctk.CTkLabel(frame, image=icon, compound="left", text="")

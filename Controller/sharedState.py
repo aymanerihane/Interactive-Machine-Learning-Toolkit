@@ -11,7 +11,7 @@ class SharedState():
         self.testing_finish = False
         self.preprocessing_finish = False
         self.prediction_finish = False
-        labels = None
+        self.labels = None
 
         #data info
         self.data_type = None
@@ -42,6 +42,8 @@ class SharedState():
         self.test_data = None
         self.process_done=[]
         self.model_name = None
+        self.model = None
+        self.test_new_data = None
 
         
 
@@ -57,6 +59,12 @@ class SharedState():
         
 
     # Setters
+
+    def set_test_new_data(self,new):
+        self.test_new_data = new
+
+    def set_model(self,model):
+        self.model = model
     def set_y_test(self, y_test):
         self.y_test = y_test
 
@@ -219,3 +227,9 @@ class SharedState():
         return self.y_test
     def get_y_pred(self):
         return self.y_pred
+    
+    def get_model(self):
+        return self.model 
+    
+    def get_test_new_data(self):
+        return self.test_new_data
