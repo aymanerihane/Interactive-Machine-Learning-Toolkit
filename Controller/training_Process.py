@@ -305,23 +305,4 @@ class TrainingProcess():
         self.predict()
         self.evaluate()
 
-    # def predict_sample(self,sample):
-    #     """
-    #     Predict the target value for a sample input.
-    #     """
-    #     # Ensure the model has been trained
-    #     if self.model is None:
-    #         raise ValueError("Model has not been trained. Please train the model before making predictions.")
-    #     process = PreD(sharedState=self.sharedState,file_path=self.sharedState.get_file_path())
-    #     self.sharedState.set_test_new_data(sample)
-    #     X_test = self.sharedState.get_test_new_data()
-    #     if 'id' in [col.lower() for col in X_test.columns]:
-    #         X_test.drop(columns=[col for col in X_test.columns if col.lower() == 'id'], inplace=True)
-    #         self.sharedState.set_test_new_data(X_test)
-        
-    #     example = process.apply_to_test(self.sharedState.get_test_new_data(),sample = True)
-    #     print(example)
-        
-    #    # sample is pdframe
-    #     pred = self.model.predict(example)
-    #     return pred
+  

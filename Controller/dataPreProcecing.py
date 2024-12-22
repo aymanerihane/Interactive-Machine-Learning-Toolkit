@@ -152,7 +152,7 @@ class DataPreProcessor:
         """
         Apply label encoding to categorical columns.
         """
-        df = data.copy() if data is not None else self.df
+        df = data.copy() if data is not None else self.df.copy()
         cat_cols = df.select_dtypes(include=['object']).columns
         print(cat_cols)
         for col in cat_cols:
