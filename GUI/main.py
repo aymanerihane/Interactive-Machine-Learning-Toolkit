@@ -18,6 +18,8 @@ from GUI.Widgets.Visualization.charts.PostTraining.cluster_scatter_plots import 
 from GUI.Widgets.Visualization.charts.PostTraining.confusion_matrix import ConfusionMatrix
 from GUI.Widgets.Visualization.charts.PostTraining.rocCurve import ROCCurves
 from GUI.Widgets.Visualization.charts.PostTraining.precision_recall_curve import PrecisionRecallCurve
+from GUI.Widgets.documentation.documentationPage import DocumentationPage
+
 from Controller.sharedState import SharedState
 
 class MainApp(ctk.CTk):
@@ -77,7 +79,8 @@ class MainApp(ctk.CTk):
                 "clusterscatterplots": ClusterScatterPlots,
                 "confusionmatrix": ConfusionMatrix,
                 "roccurves": ROCCurves,
-                "precisionrecallcurve": PrecisionRecallCurve
+                "precisionrecallcurve": PrecisionRecallCurve,
+                "documentation": DocumentationPage
                 
             }
             if page_name in chart_classes:
@@ -87,7 +90,7 @@ class MainApp(ctk.CTk):
         page_name = page_name.replace(" ", "").lower()
         dynamic_pages = [
             "histograme", "scatterplot", "piechart", "boxplot", 
-            "heatmap", "table", "pairplots", "violinplots", "stackedbarcharts","dendrograms","bargraphs","linegraphs","clusterscatterplots","confusionmatrix","roccurves","precisionrecallcurve"
+            "heatmap", "table", "pairplots", "violinplots", "stackedbarcharts","dendrograms","bargraphs","linegraphs","clusterscatterplots","confusionmatrix","roccurves","precisionrecallcurve","documentation"
         ]
         if page_name in dynamic_pages:
             self.initialize_page(page_name, reinitialize=True)

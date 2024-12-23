@@ -8,6 +8,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 from Controller.dataPreProcecing import DataPreProcessor as PreD
 import pandas as pd
 from tkinter import messagebox
+import platform
 
 
 class DataInfo(ctk.CTkFrame):
@@ -83,6 +84,21 @@ class DataInfo(ctk.CTkFrame):
             font=self.FONT_LABEL
         ).grid(row=1, column=0, padx=10)
 
+        #button for download documentation
+        self.documentation_frame = ctk.CTkFrame(self.data_info_frame1, corner_radius=10, fg_color="transparent")
+        self.documentation_frame.grid(row=1, column=1, padx=0)
+
+        self.documentation_frame.grid_rowconfigure(0, weight=1)
+        self.documentation_frame.grid_rowconfigure(1, weight=1)
+
+
+        self.view_documentation = ctk.CTkButton(self.documentation_frame, text="View\nDocumentation", command=lambda: self.switch_page("documentation"))
+        self.view_documentation.grid(row=0, column=0, padx=0)
+
+        self.downloadButton = ctk.CTkButton(self.documentation_frame, text="Download\nDocumentation", command=self.download_documentation)
+        self.downloadButton.grid(row=1, column=0, padx=0,pady=5)
+
+
         #####################################
         #       Second Column in Data Info
         #####################################
@@ -112,6 +128,26 @@ class DataInfo(ctk.CTkFrame):
         
 
         
+
+
+    def download_documentation(self):
+        print("Download Documentation clicked!")
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        root_dir = os.path.join(current_dir, "..", "..", "..")
+        documentation_file = os.path.join(root_dir, "documentation", "documentation.pdf")
+        
+        # Check if the file exists
+        if os.path.exists(documentation_file):
+            # Open the documentation based on the OS
+            if platform.system() == "Darwin":  # macOS
+                os.system(f"open \"{documentation_file}\"")
+            elif platform.system() == "Windows":  # Windows
+                os.system(f"start \"\" \"{documentation_file}\"")
+            else:  # Linux or other systems
+                os.system(f"xdg-open \"{documentation_file}\"")
+        else:
+            print("Documentation file not found.")
+
 
     def visualize_data(self):
         print("Visualize Data clicked!")
