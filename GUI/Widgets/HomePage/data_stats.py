@@ -175,7 +175,8 @@ class DataStats(ctk.CTkFrame):
                 self.buttons[name].configure(state=ctk.DISABLED)
 
             # Perform preprocessing action
-            self.preprocessing(name)
+            self.preprocessing(name,update_stat = self.update_stats)
+            self.update_stats()
 
         # Create buttons dynamically
         j = 0
@@ -198,7 +199,7 @@ class DataStats(ctk.CTkFrame):
             self.buttons[name] = button
 
 
-    def preprocessing(self, name):
+    def preprocessing(self, name, update_stat=None):
         """
         Main preprocessing function with conditions based on dataset characteristics and user preferences.
         """
@@ -244,10 +245,19 @@ class DataStats(ctk.CTkFrame):
         if name in enable_steps and enable_steps[name]:
             print(f"Executing '{name}' preprocessing step.")
             try:
-                actions[name]()
+                if name == "Reset":
+                    # Reset all preprocessing steps
+                    actions[name]()
+                    df  = self.sharedState.get_original_data()
+                else:
+                    df = actions[name]()
                 # Update the shared state after the preprocessing step
-                self.sharedState.set_data(self.preprocess.df)
+                self.sharedState.set_data(df)
+                self.preprocess.set_data_stats(self.update_stats,refreach=True)
+                self.preprocess.set_data_info()
                 self.sharedState.add_process(name)
+                # if update_stat is not None:
+                    # update_stat(df)
                 print(f"'{name}' step completed successfully.")
             except Exception as e:
                 print(f"Error occurred while executing '{name}': {e}")
@@ -260,6 +270,7 @@ class DataStats(ctk.CTkFrame):
         self.sharedState.set_preprocessing_finish(True)
         if self.button_export is not None:
             self.button_export.configure(state=ctk.NORMAL)
+        
 
     def export_processed_data_button(self):
         """Export the processed data to a CSV file."""

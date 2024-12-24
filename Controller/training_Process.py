@@ -45,7 +45,7 @@ class TrainingProcess():
         self.best_model = model_name
 
     def split_data(self):
-        self._data = self.sharedState.get_data().copy()
+        self._data = self.sharedState.get_data()
         self._X = self._data.drop([self.sharedState.get_target_column()] + [col for col in self._data.columns if 'id' in col.lower()], axis=1)
         self._y = self._data[self.sharedState.get_target_column()]
 
@@ -249,12 +249,11 @@ class TrainingProcess():
             test = test[self._X_test.columns]
             print(test)
         
+        y_pred = [round(pred, 2) for pred in self._model.predict(test)] 
+
         if data is None:
-            self._y_pred = self._model.predict(test)
-            y_pred = self._y_pred
+            self._y_pred = y_pred
             self.sharedState.set_y_pred(self._y_pred)
-        else:
-            y_pred = self._model.predict(test)
         self.sharedState.set_prediction_finish(True)
 
         return y_pred

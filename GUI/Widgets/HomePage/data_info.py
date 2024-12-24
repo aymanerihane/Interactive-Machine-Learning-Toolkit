@@ -178,6 +178,7 @@ class DataInfo(ctk.CTkFrame):
         #make the has taget checkbox active
         self.target_var.set(True)
         self.sharedState.set_has_target(True)
+        self.refresh_data_training_button()
         
         return data
 
@@ -193,14 +194,16 @@ class DataInfo(ctk.CTkFrame):
         columns = data.columns
         #add radio buttons for each column
         self.radio_var = ctk.StringVar()
-        for i,column in enumerate(columns):
+        i = 0
+        for column in columns:
             #add a radio button 
             
             ctk.CTkRadioButton(self.scrollable_frame, 
-                                        text=f"{i}: {column}", text_color="white",
+                                        text=f"{column}", text_color="white",
                                         value=column,
-                                        command=lambda value=column, index=i: self.sharedState.set_target_column(value),  # Set the target column and the index
+                                        command=lambda value=column : self.sharedState.set_target_column(value),  # Set the target column and the index
                                         variable=self.radio_var).grid(row=i, column=0, pady=(0, 10))
+            i += 1
         
         #setting the default radio value by the last column
         self.radio_var.set(columns[-1])

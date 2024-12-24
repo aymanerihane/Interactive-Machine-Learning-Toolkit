@@ -303,7 +303,10 @@ class FunctionalitySection(ctk.CTkFrame):
                     # Re-enable the button if training is not successful
                     if probleme:
                         self.buttons[name].configure(state=ctk.NORMAL)
-            self.create_prediction_widget()
+                
+                if name != "Reset":
+            
+                    self.create_prediction_widget()
 
             if name == "Reset":
                 # Reset all buttons to their initial enabled/disabled state

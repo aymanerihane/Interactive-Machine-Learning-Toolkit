@@ -116,11 +116,12 @@ class SharedState():
 
     def set_data(self, data,first = False):
         self._data = data
-        self.set_columns(data.columns)
+        # self.set_columns(data.columns)
         if first:
             print("First time")
             print("Columns: ", data.columns)
-            self.set_target_column(data.columns[-1])
+            col = data.columns
+            self.set_target_column(col[-1])
     
     def set_original_data(self, data):
         self._original_data = data.copy()

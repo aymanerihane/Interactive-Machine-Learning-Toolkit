@@ -41,8 +41,8 @@ class DataPreProcessor:
 
     def set_data(self,data):
         self._df = data
-        self.set_data_info()
         self.sharedState.set_data(self._df)
+        self.set_data_info()
 
     def set_data_stats(self,refresh_data_stats,refreach = True):
         """
@@ -167,7 +167,6 @@ class DataPreProcessor:
     def apply_to_test(self, test_df,sample = False):
         if 'id' in [col.lower() for col in test_df.columns]:
             test_df.drop(columns=[col for col in test_df.columns if col.lower() == 'id'], inplace=True)
-        test_df_copy = test_df.copy()
         if not sample : 
             self.sharedState.set_test_data(test_df)
         else :
@@ -199,7 +198,7 @@ class DataPreProcessor:
                 case "Apply Feature Augmentation":
                     test_df = self.apply_feature_augmentation(data=test_df,ignore_target=True)
                 case "Reset":
-                    test_df = test_df_copy
+                    test_df = self.sharedState.get_original_data()
                 case _:
                     print(process)
         
@@ -265,8 +264,13 @@ class DataPreProcessor:
             balance (str, optional): 'balanced' or 'imbalanced' (only for classification).
             """
         #find the task using the target column
+        self._df = self.sharedState.get_data()
         try:
             if self.sharedState.get_has_target():
+                if isinstance(self._df, tuple):
+                    self._df = self._df[0]
+                    self.sharedState.set_data(self._df)
+                print("Target column: ", self._df)
                 if self._df[self.sharedState.get_target_column()].dtype == 'object' or len(self._df[self.sharedState.get_target_column()].unique()) < 10 :
                     task = 'classification'    
                 else:
@@ -400,7 +404,7 @@ class DataPreProcessor:
 
         # Step 7: General preprocessing
         applied_steps.append("Removing duplicate rows")
-        self._df.drop_duplicates(inplace=True)
+        # self._df.drop_duplicates(inplace=True)
         self.sharedState.add_process("Remove Duplicates")
         applied_steps.append("Checking and standardizing data types")
         self.standardize_data_types(data)
@@ -416,6 +420,7 @@ class DataPreProcessor:
         # Sort columns by name, ensuring the target column is last
         cols = sorted([col for col in self._df.columns if col != target_col]) + [target_col]
         self._df = self._df[cols]
+        self._df = pd.DataFrame(self._df, columns=cols)
         self.sharedState.add_process("Sorted")
         
         self.sharedState.set_data(self._df)
@@ -540,10 +545,13 @@ class DataPreProcessor:
         self.sharedState.set_preprocessing_finish(True)
         return df
     
+    def set_df(self,df):
+        self._df = df
+
     def reset(self):
+        self.set_df(self.sharedState.get_original_data())
         self.sharedState.set_data(self.sharedState.get_original_data())
-        self._df = self.sharedState.get_original_data().copy()
         self.sharedState.set_preprocessing_finish(False)
-        self.sharedState.set_new_process()
+        # self.sharedState.set_new_process()
         self.sharedState.add_process("Reset")
         print("## Data reset")
