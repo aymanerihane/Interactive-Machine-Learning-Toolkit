@@ -8,10 +8,13 @@ import pandas as pd
 from sklearn.metrics import classification_report
 
 class FunctionalitySection(ctk.CTkFrame):
-    def __init__(self, parent, sharedState):
+    def __init__(self, parent, sharedState,sharedState_setter=None,create_prediction_widget=None):
         super().__init__(parent)
         self.sharedState = sharedState
         self.switch_page = parent.switch_page
+        self.sharedState_setter = sharedState_setter
+        self.create_prediction_widget = create_prediction_widget
+
 
         self.preprocess = PreD(sharedState=self.sharedState,just_for_method_use=True)
         self.training = TrainingProcess(sharedState=self.sharedState)
@@ -72,6 +75,7 @@ class FunctionalitySection(ctk.CTkFrame):
         self.EvaluationFrame.grid(row=0, column=2, sticky="nsew", padx=10, pady=10)
 
         # Classification Report Frame
+        self.ClassificationReportFrame = None
         self.ClassificationReportFrame = ctk.CTkFrame(self.EvaluationFrame, fg_color="transparent")
         self.ClassificationReportFrame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
 
@@ -191,6 +195,7 @@ class FunctionalitySection(ctk.CTkFrame):
                 
             # Enable the export button
             self.ExportButton.configure(state=ctk.NORMAL)
+            
 
 
             
@@ -294,6 +299,7 @@ class FunctionalitySection(ctk.CTkFrame):
                             self.create_classification_report_table()
                         else:
                             self.regression_plot()
+                    self.ExportModelButton.configure(state=ctk.NORMAL)
                         
 
                 except Exception as e:
@@ -361,6 +367,45 @@ class FunctionalitySection(ctk.CTkFrame):
             ##button
             self.ExportButton = ctk.CTkButton(self.SecondRowFrame, text="Export Result", command=self.export_Result, state = ctk.DISABLED)
             self.ExportButton.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
+
+        # Export Button
+        ##button
+        self.ExportModelButton = ctk.CTkButton(self.SecondRowFrame, text="Export Model", command=self.export_model, state = ctk.DISABLED)
+        self.ExportModelButton.grid(row=0, column=4, padx=5, pady=5, sticky="ew")
+    
+    def export_model(self):
+        """
+        Export the model to a pkl file.
+        """
+        import pickle
+        try:
+            # Fetch the model
+            sharedState = self.sharedState
+
+            # Validate that the model is not None
+            if sharedState is None:
+                raise ValueError("Model is not set. Ensure the model has been trained.")
+            
+            #current directory
+            current_dir = os.getcwd()
+            new_dir = os.path.join(current_dir, "models")
+            model_name = self.sharedState.get_model_name()
+
+            # Define the file path for the model
+            file_path = os.path.join(new_dir, "shared_file.pkl")
+
+            # Export the model to a pkl file
+            with open(file_path, "wb") as file:
+                pickle.dump(sharedState, file)
+
+
+            # Show a success message
+            messagebox.showinfo("Export Successful", f"Model exported to {file_path}")
+
+        except Exception as e:
+            # Display error message if an exception occurs
+            messagebox.showerror("Error", f"An error occurred while exporting the model: {str(e)}")
+        
         
         
 
@@ -614,126 +659,4 @@ class FunctionalitySection(ctk.CTkFrame):
             messagebox.showerror("Error", f"An error occurred while exporting the report: {str(e)}")
 
         
-    def create_prediction_widget(self):
-        """
-        Create a widget for making new predictions based on user input.
-        """
-        #new frame with birder in self for prediction new data
-        self.PredictionFrame1.grid(row=1, column=0, sticky="w", padx=10, pady=10)
-
-        # Destroy all children of PredictionFrame1
-        for widget in self.PredictionFrame1.winfo_children():
-            widget.destroy()
-        # Prediction Frame
-        self.PredictionFrame = ctk.CTkFrame(self.PredictionFrame1, fg_color="transparent")
-        self.PredictionFrame.grid(row=4, column=0, columnspan=5, sticky="nsew", padx=10, pady=10)
-
-        # Title
-        self.PredictionTitle = ctk.CTkLabel(
-            self.PredictionFrame,
-            text="Make a New Prediction",
-            font=self.FONT_TITLE,
-            anchor="center"
-        )
-        self.PredictionTitle.pack(fill="x", pady=10)
-
-        # Fetch feature names
-        feature_names = [
-            col for col in self.sharedState.get_original_data().columns
-            if col != self.sharedState.get_target_column()
-        ]
-
-        # Create entry fields for each feature
-        self.feature_entries = {}
-        for feature in feature_names:
-            if not feature.lower() == 'id':
-                # Horizontal container for label and entry
-                feature_container = ctk.CTkFrame(self.PredictionFrame, fg_color="transparent")
-                feature_container.pack(fill="x", padx=10, pady=5)
-
-                # Feature label
-                label = ctk.CTkLabel(
-                    feature_container,
-                    text=feature,
-                    font=self.FONT_LABEL
-                )
-                label.pack(side="left", padx=10)
-
-                # Check if the feature is categorical
-                if pd.api.types.is_categorical_dtype(self.sharedState.get_original_data()[feature]) or \
-                        self.sharedState.get_original_data()[feature].dtype == object:
-                    # Create a dropdown menu for categorical features
-                    unique_values = self.sharedState.get_original_data()[feature].unique()
-                    entry = ctk.CTkComboBox(feature_container, values=unique_values)
-                else:
-                    # Create an entry field for numerical features
-                    entry = ctk.CTkEntry(feature_container)
-
-                # Pack the entry field to the right of the label
-                entry.pack(side="left", fill="x", expand=True, padx=5)
-                self.feature_entries[feature] = entry
-
-        # Predict Button
-        _, _,_,_,task = self.sharedState.get_data_info()
-
-        self.PredictButton = ctk.CTkButton(
-            self.PredictionFrame,
-            text="Predict class : " if task.lower() == 'classification' else ('Predict Value : ' if task.lower() == 'regression'else 'Cluster Predicted : ') ,
-            command=self.make_prediction
-        )
-        self.PredictButton.pack(pady=10)
-
-        # Prediction Result Label
-        self.PredictionResultLabel = ctk.CTkLabel(
-            self.PredictionFrame,
-            text="",
-            font=self.FONT_LABEL,
-            anchor="center"
-        )
-        self.PredictionResultLabel.pack(pady=10)
-
-    def make_prediction(self):
-        """
-        Make a prediction based on user input and display the result.
-        """
-        try:
-            # Collect input data from entry fields
-            input_data = []
-            for feature, entry in self.feature_entries.items():
-                value = entry.get()
-                print("value", value)
-                if value == "":
-                    messagebox.showerror("Error", f"Value for {feature} is missing.")
-                    raise ValueError(f"Value for {feature} is missing.")
-                
-                # Check if the feature is categorical
-                if pd.api.types.is_categorical_dtype(self.sharedState.get_original_data()[feature]) or self.sharedState.get_original_data()[feature].dtype == object:
-                    input_data.append(value)
-                else:
-                    input_data.append(float(value))
-
-            # Convert input data to DataFrame
-            input_df = pd.DataFrame([input_data], columns=self.feature_entries.keys())
-
-            # Make prediction
-            prediction = self.training.predict(data = input_df)
-
-            # If it's a classification task, map the prediction to the original class label
-            _, _,_,_,task = self.sharedState.get_data_info()
-
-            print(task)
-
-            if task.lower() == "classification":
-                original_classes = self.sharedState.get_original_data()[self.sharedState.get_target_column()].unique()
-                prediction = [original_classes[int(pred)] for pred in prediction]
-            elif task.lower() == "clustering":
-                prediction = [self.sharedState.get_labels()[int(pred)] for pred in prediction]
-
-            # Display prediction result
-            self.PredictionResultLabel.configure(text=f"Prediction: {prediction[0]}", text_color="green")
-
-
-        except Exception as e:
-            # Display error message if an exception occurs
-            self.PredictionResultLabel.configure(text=f"Error: {str(e)}", text_color="red")
-            print(f"Error: {str(e)}")
+    

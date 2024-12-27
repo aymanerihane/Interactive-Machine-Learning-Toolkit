@@ -191,7 +191,7 @@ class TrainingProcess():
                         self._model = XGBRegressor()
                     else:
                         self._model = XGBClassifier()
-                case 'LightGBM':
+                case 'lightgbm':
                     from lightgbm import LGBMClassifier
                     from lightgbm import LGBMRegressor
                     if task == 'regression':
@@ -213,7 +213,7 @@ class TrainingProcess():
                     best_model = self.choose_best_model()
                     self.train_model(best_model)
                 case _:
-                    print('Invalid model name')
+                    print(f'Invalid model name {model_name}')
             print("PetalWidthCm" in self._X_train.columns)
             print(self._X_train.columns)
             self._model.fit(self._X_train,self._y_train)
@@ -232,7 +232,9 @@ class TrainingProcess():
 
 
     def predict(self,data = None):
+        example = None
         if data is not None:
+            # print("Data is not None}}}}}}}}}}")
             process = PreD(sharedState=self.sharedState,file_path=self.sharedState.get_file_path())
             self.sharedState.set_test_new_data(data)
             X_test = self.sharedState.get_test_new_data()
@@ -241,15 +243,23 @@ class TrainingProcess():
                 self.sharedState.set_test_new_data(X_test)
             
             example = process.apply_to_test(self.sharedState.get_test_new_data(),sample = True)
+        # else:
+            # X_test = self._X_test
 
-        test = example if data is not None else self._X_test
+        print(example)
+        # self._X_test = self. 
+
+        test = example if example is not None else self._X_test
+        print(test)
         # Remove id column from X_test if it exists
         # Ensure the test data has the same feature names as the training data
         if data is not None:
             test = test[self._X_test.columns]
             print(test)
+
+        model = self.sharedState.get_model()
         
-        y_pred = [round(pred, 2) for pred in self._model.predict(test)] 
+        y_pred = [round(pred, 2) for pred in model.predict(test)] 
 
         if data is None:
             self._y_pred = y_pred

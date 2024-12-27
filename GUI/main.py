@@ -1,4 +1,6 @@
 import customtkinter as ctk
+import pickle
+import os
 from home import HomePage
 from Widgets.Visualization.visualization import VisualizationPage
 from Widgets.header_wgt import HeaderWidget
@@ -59,7 +61,7 @@ class MainApp(ctk.CTk):
 
         # Initialize and store the page in the dictionary if not already initialized
         if page_name == "home":
-            self.pages[page_name] = HomePage(self, switch_page=self.show_page, sharedState=self.sharedState)
+            self.pages[page_name] = HomePage(self, switch_page=self.show_page, sharedState=self.sharedState,sharedState_seter=self.sharedState_setter)
         elif page_name == "visualization":
             self.pages[page_name] = VisualizationPage(self, switch_page=self.show_page, sharedState=self.sharedState)
         else:
@@ -100,6 +102,34 @@ class MainApp(ctk.CTk):
             page.pack_forget()
         self.pages[page_name].pack(expand=True, fill="both")
         self.header.update_text(page_name.capitalize())
+
+    def sharedState_setter(self):
+        """
+        Load the shared state from a pickle file and update it.
+        """
+        current_directory = os.getcwd()
+        shared_file = os.path.join(current_directory, "models/shared_file.pkl")
+
+        try:
+            # Load the model from the pickle file
+            with open(shared_file, 'rb') as file:
+                new_shared_state = pickle.load(file)
+
+                # Ensure the loaded data is a dictionary
+            self.sharedState = new_shared_state
+
+            # Update the shared state in all pages
+            for page in self.pages.values():
+                page.sharedState = new_shared_state
+        except FileNotFoundError:
+            raise FileNotFoundError(f"The shared state file '{shared_file}' does not exist.")
+        except pickle.UnpicklingError:
+            raise ValueError(f"Failed to load the shared state from the file '{shared_file}'. Ensure the file is valid.")
+        except Exception as e:
+            raise RuntimeError(f"An error occurred while loading the shared state: {e}")
+        
+        return self.sharedState
+        
 
 if __name__ == "__main__":
     sharedState = SharedState()

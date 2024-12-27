@@ -11,6 +11,7 @@ class SharedState():
         self._testing_finish = False
         self._preprocessing_finish = False
         self._prediction_finish = False
+        self._model_file_uploaded = False
         self._labels = None
 
         #data info
@@ -57,6 +58,11 @@ class SharedState():
         self.DARK_COLOR = "#333333"
 
     # Setters
+
+    def set_model_file_uploaded(self, value):
+        self._model_file_uploaded = value
+
+
 
     def set_test_new_data(self,new):
         self._test_new_data = new
@@ -232,3 +238,6 @@ class SharedState():
     
     def get_test_new_data(self):
         return self._test_new_data
+    
+    def get_model_file_uploaded(self):
+        return self._model_file_uploaded

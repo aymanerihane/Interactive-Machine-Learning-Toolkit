@@ -12,11 +12,13 @@ import platform
 
 
 class DataInfo(ctk.CTkFrame):
-    def __init__(self, parent, sharedState, refresh_data_stats,refresh_data_training_button):
+    def __init__(self, parent, sharedState, refresh_data_stats,refresh_data_training_button,update_predection,sharedState_seter = None):
         super().__init__(parent)
+        self.sharedState_setter = sharedState_seter
+        self.update_predection = update_predection
+        self.sharedState = sharedState
         self.refresh_data_training_button = refresh_data_training_button
         self.statTestDataUpload = "disabled"
-        self.sharedState = sharedState
         self.switch_page = parent.switch_page
         self.refresh_data_stats = refresh_data_stats
         # Define the fonts
@@ -42,8 +44,11 @@ class DataInfo(ctk.CTkFrame):
         # Label and button for "Data Upload"
         self.label1 = ctk.CTkLabel(self.data_info_frame1, text="Upload Data :", text_color=self.sharedState.TEXT_COLOR, font=self.FONT_LABEL)
         self.label1.grid(row=0, column=0, padx=0, pady=10)
+
+        self.buttonUploadFrame = ctk.CTkFrame(self.data_info_frame1, corner_radius=10, fg_color="transparent")
+        self.buttonUploadFrame.grid(row=0, column=1, padx=0)
         self.button1 = ctk.CTkButton(
-            self.data_info_frame1,
+            self.buttonUploadFrame,
             text="Upload Data",
             command=self.upload_file,
             fg_color=self.sharedState.PRIMARY_COLOR,
@@ -51,7 +56,19 @@ class DataInfo(ctk.CTkFrame):
             text_color=self.sharedState.WHITE,
             font=self.FONT_BUTTON
         )
-        self.button1.grid(row=0, column=1, padx=10)
+        self.button1.grid(row=0, column=0, padx=10)
+        self.button2 = ctk.CTkButton(
+            self.buttonUploadFrame,
+            text="Upload Model",
+            command=self.upload_file_model,
+            fg_color=self.sharedState.PRIMARY_COLOR,
+            hover_color=self.sharedState.HOVER_COLOR,
+            text_color=self.sharedState.WHITE,
+            font=self.FONT_BUTTON
+        )
+        self.button2.grid(row=1, column=0, padx=10)
+
+
 
         # Second row inside data_info_frame1
         self.data_info_frame2 = ctk.CTkFrame(self.data_info_frame1, corner_radius=10, fg_color=self.sharedState.PRIMARY_COLOR)
@@ -128,6 +145,30 @@ class DataInfo(ctk.CTkFrame):
         
 
         
+    def upload_file_model(self):
+        """
+        Upload a model file and update the shared state.
+        """
+        # Ask the user to select a file
+        file = filedialog.askopenfilename(title="Select a File")
+
+        if file:
+            print(f"File uploaded: {file}")
+
+            # Load the shared state using the setter
+            try:
+                self.sharedState_setter()
+                # Update the label to indicate success
+                self.label1.configure(text="Model uploaded successfully", text_color="green")
+
+                # Trigger any additional updates (e.g., predictions)
+                self.update_predection()
+            except Exception as e:
+                print(f"Error while processing the uploaded file: {e}")
+                self.label1.configure(text="Failed to upload the model", text_color="red")
+        else:
+            print("No file selected.")
+            self.label1.configure(text="No file selected", text_color="red")
 
 
     def download_documentation(self):
@@ -302,7 +343,7 @@ class DataInfo(ctk.CTkFrame):
                 self.sharedState.set_original_data(data)
                 self.sharedState.set_original_columns(data.columns)
                 self.sharedState.set_data(data,first=True)
-                self.preprocess.set_data_stats(self.refresh_data_stats)
+                self.preprocess.set_data_stats(self.refresh_data_stats,first = True)
                 self.sharedState.set_file_path(save_path)
             else:
                 data = pd.read_csv(save_path)

@@ -268,8 +268,7 @@ class DataStats(ctk.CTkFrame):
         self.preprocess.set_data_stats(None,refreach=False)
         self.update_stats()
         self.sharedState.set_preprocessing_finish(True)
-        if self.button_export is not None:
-            self.button_export.configure(state=ctk.NORMAL)
+            
         
 
     def export_processed_data_button(self):
@@ -287,7 +286,7 @@ class DataStats(ctk.CTkFrame):
         # Export button
         self.button_export = ctk.CTkButton(self.preProcessingFrame, text="Export Processed Data", command=on_export_click)
         self.button_export.grid(row=4, column=1, columnspan=3, padx=5, pady=5, sticky="ew")
-        self.button_export.configure(state=ctk.DISABLED)
+        self.button_export.configure(state=ctk.NORMAL)
             
 
     def update_stats(self,first=False):

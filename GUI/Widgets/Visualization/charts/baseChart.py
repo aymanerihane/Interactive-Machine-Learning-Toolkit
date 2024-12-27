@@ -188,7 +188,7 @@ class BaseChart(ctk.CTkFrame):
             for widget in self.plot_frame.winfo_children():
                 widget.destroy()
 
-        visualizer = ChartHandler(self.data,self.mappings)
+        visualizer = ChartHandler(self.sharedState.get_original_data(),self.mappings)
         return visualizer
 
     def return_to_previous_page(self):

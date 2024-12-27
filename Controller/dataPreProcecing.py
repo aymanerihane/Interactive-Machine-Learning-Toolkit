@@ -44,7 +44,7 @@ class DataPreProcessor:
         self.sharedState.set_data(self._df)
         self.set_data_info()
 
-    def set_data_stats(self,refresh_data_stats,refreach = True):
+    def set_data_stats(self,refresh_data_stats,refreach = True,first = False):
         """
         Set the data statistics in the shared state.
         """
@@ -65,7 +65,7 @@ class DataPreProcessor:
         self.sharedState.set_data_stats(nan_values, missing_values, num_classes, data_shape,balanced, num_categorical_cols, num_numerical_cols,duplicate_columns)
 
         if refreach:
-            refresh_data_stats()
+            refresh_data_stats() if not first else refresh_data_stats(first = first)
 
     def reduce_features(self, threshold=0.9,data = None):
         """
